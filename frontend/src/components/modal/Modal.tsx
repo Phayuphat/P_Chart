@@ -55,7 +55,7 @@ const Modalshow: React.FC<ModalProps> = ({ isOpen, onClose }) => {
 
     const minus = () => {
         let
-         newCount = count - 1;
+          newCount = count - 1;
         if (newCount < 0) {
           return {newCount: 0}
         } else {

@@ -5,6 +5,12 @@ interface Item {
     target_by_item: number;
 }
 
+interface ItemA {
+    line_id: number;
+    key: string;
+    line_name: string;
+}
+
 interface EditableRowProps {
     index: number;
 }

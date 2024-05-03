@@ -1,12 +1,9 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+# from fastapi.staticfiles import StaticFiles
 
-# need import models for auto create
-from app.routers import (
-    users_routers, commons_routers
-)
+from app.routers import commons_routers, users_routers
 from app.dependencies import get_common_pg_async_db
 
 app = FastAPI()
@@ -23,10 +20,6 @@ app.add_middleware(
 
 app.include_router(users_routers(get_common_pg_async_db), prefix="/api/users")
 app.include_router(commons_routers(get_common_pg_async_db), prefix="/api/commons")
-
-# app.include_router(app_settings_routers(get_app_pg_async_db), prefix="/api/setting")
-# app.include_router(app_search_routers(get_app_pg_async_db), prefix="/api/search")
-# app.include_router(app_routers(get_app_pg_async_db), prefix="/api/app")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

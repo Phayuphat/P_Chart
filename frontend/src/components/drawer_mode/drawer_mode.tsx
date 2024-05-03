@@ -36,6 +36,7 @@ const DrawerMode: React.FC= () => {
 
   const showDrawer = () => {
     setOpen(true);
+    
   };
 
   const onTabChange = (key: string) => {
@@ -221,7 +222,7 @@ const DrawerMode: React.FC= () => {
       children: (
         <Table
           className="category_table"
-          scroll={{y: 650}}
+          scroll={{y: 470}}
           //rowClassName={() => "editable-row"}
           bordered
           pagination={false}
@@ -241,7 +242,7 @@ const DrawerMode: React.FC= () => {
       children: (
         <Table
           className="category_table"
-          scroll={{y: 650}}
+          scroll={{y: 470}}
           pagination={false}
           //rowClassName={() => "editable-row"}
           bordered
@@ -256,7 +257,7 @@ const DrawerMode: React.FC= () => {
       children: (
         <Table
           className="category_table"
-          scroll={{y: 650}}
+          scroll={{y: 470}}
           pagination={false}
           //rowClassName={() => "editable-row"}
           dataSource={RepeatNG_Data}
@@ -278,8 +279,9 @@ const DrawerMode: React.FC= () => {
       </Button>
       <Drawer
           className="drawer_category"
+          placement="bottom"
           title={<span className="title"> Create Category </span>}
-          width={1500}
+          height={780}
           closable={false}
           open={Open}
       >

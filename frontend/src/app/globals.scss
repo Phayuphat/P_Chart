@@ -19,6 +19,7 @@
   width: 100%;
   justify-content: center;
   display: flex;
+  gap: 15px;
 }
 
 .title{
@@ -40,12 +41,12 @@
 }
 
 .category_table{
-  height: 720px;
+  height: 540px;
 }
 
 //*********************** table in drawer ****************
 .ant-table-placeholder {
-  height: 650px;
+  height: 470px;
 }
 
 .button_edit{
@@ -107,11 +108,6 @@ button {
   padding: 2px;
   
 }
-
-
-
-
-
 
 
 
