@@ -1,9 +1,36 @@
 interface Item {
-    id: number;
     key: string;
+    id: number;
+    category: string;
+    mode_id:number
     mode: string;
-    target_by_item: number;
+    target:number;
+    update_at: string;
+}  
+
+interface EditData {
+    line_id: number;
+    part_no: string;
+    category: string;
+    mode: string;
+    target: number;
+    update_at: string;
 }
+
+interface Updata {
+    mode_id: number;
+    mode: string;
+    // target: number;
+    update_at: string;
+}
+
+type id_row = {
+    id: number
+}
+
+
+
+
 
 interface ItemA {
     line_id: number;

@@ -1,5 +1,143 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
+//******************* monitor name *************************************/
+.monitor_name{
+  font-size: 20px;
+  font-weight: bold;
+  color: blue;
+  width: 250px;
+}
+
+.button_edit_monitor{
+  font-size: 20px;
+  padding-right: 5px;
+}
+
+//*********************** action column **********************************/
+.actions-group{
+  gap: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+//*********************** update time column ******************************/
+.update_at{
+  display: flex;
+  justify-content: center;
+}
+
+//*********************** image preview column **********************************/
+.image_show{
+  display: flex;
+  justify-content: center;
+}
+
+//*********************** form header ******************************/
+.header{
+  padding: 1rem;
+}
+.box_header{
+  border: 2px solid lightgray;
+  border-radius: 5px ;
+  display: flex;
+  justify-content: center;
+  padding-top: 1.5rem;
+  padding: 20px;
+}
+
+.form_selector{
+  display: flex;
+  gap: 2rem;
+}
+
+.label_name{
+  font-size: 20px;
+}
+
+.form_search{
+  display: flex;
+  align-items: right;
+  justify-content: right;
+}
+
+.form_search_part_no{
+display: flex;
+justify-content: flex-start;
+padding-right: 0.5rem;
+padding-top: 1.5rem;
+flex: 1;
+}
+
+.search_part_no{
+  width: 300px;
+  margin-right: 2rem;
+}
+
+.form_add_image{
+  padding-top: 1.5rem;
+
+}
+
+
+//*********************** edit table ******************************/
+.table_container{
+  border-radius: 10px;
+  box-shadow: 5px 5px 20px 0px rgba(50, 50, 50, .5);
+}
+
+.edit_table td{
+  border: 1px solid rgb(201, 201, 201);
+  /* height: 500px; */
+}
+
+.edit_table th{
+  border: 1px solid rgb(201, 201, 201);
+  text-align: center;
+}
+
+.tab_category{
+  padding: 1rem;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //******************* graph *************************
 .switch_chart{
   display: flex;

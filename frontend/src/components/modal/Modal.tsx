@@ -81,6 +81,7 @@ const Modalshow: React.FC<ModalProps> = ({ isOpen, onClose }) => {
         });
       };
 
+    //TODO: f.get part number show on modal
     const testshow = [
       {name:"TG111"},
       {name:"TG222"},
