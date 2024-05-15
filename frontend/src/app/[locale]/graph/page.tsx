@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import DrawerMode from "@/components/drawer_mode/drawer_mode";
 import Modalshow from "@/components/modal/Modal";
 import { Table, DatePicker, Button, Form, Select, Radio, Input } from "antd";
 import type { TableProps, DatePickerProps } from "antd";
@@ -12,6 +11,7 @@ import html2canvas from "html2canvas";
 import { SearchOutlined } from "@ant-design/icons";
 import axiosInstance from "@/lib/axios";
 
+import DrawerMode from "@/components/drawer_mode/drawer_mode";
 import { values } from "lodash";
 import { count } from "console";
 import { text } from "stream/consumers";
@@ -28,12 +28,11 @@ const App: React.FC = () => {
   const [ChangeChart, setTypeChart] = useState("p_chart");
   const ChartRef = useRef<HTMLDivElement>(null);
   const [LineName, setLineName] = useState<any>([]);
-  // const [Shift, setShift] = useState<any>([])
   const [PartNo, setPartNo] = useState<any>([]);
   const [DataList, setDataList] = useState<string>("");
   const [ModalOpen, setIsModalOpen] = useState(false);
 
-  //dowload image chart
+  //*********************** function download chart to .jpg ************************
   const downloadChart = async () => {
     if (ChartRef.current) {
       try {
@@ -64,6 +63,7 @@ const App: React.FC = () => {
     return isUnique;
   });
 
+  //************************************** get line name(api) ***************************
   const fetch_linename = async () => {
     try {
       const response_linename = await axiosInstance.get(
@@ -82,6 +82,7 @@ const App: React.FC = () => {
     fetch_linename();
   }, []);
 
+  //****************************************** get part number(api) **********************
   const ShiftChange = async () => {
     try {
       const response_part = await axiosInstance.get("/commons/get_part_no");
@@ -94,14 +95,15 @@ const App: React.FC = () => {
     }
   };
 
+  //****************************************** get all data in database(api) **********************
   const get_data = async () => {
     const line_id = form.getFieldValue("LineName") || "0";
-    const part_no = form.getFieldValue("Part_Number") || "0";
+    const part_no = form.getFieldValue("Part Number") || "0";
     console.log("line_id", line_id);
     console.log("part_no", part_no);
 
     const response_data_all = await axiosInstance.get(
-      "/commons/get_data_table",
+      "/commons/get_data_graph",
       {
         params: {
           line_id: line_id,
@@ -114,6 +116,8 @@ const App: React.FC = () => {
       const data_repeat = response_data_all.data.filter(
         (item: { category: string }) => item.category === "Repeat"
       );
+      
+
       console.log("repeat_mode", data_repeat);
 
       const data_scrap = response_data_all.data.filter(
@@ -143,6 +147,7 @@ const App: React.FC = () => {
     setTypeChart(value.target.value);
   };
 
+  //*********************************** function open modal ***************************
   const showModal = () => {
     setIsModalOpen(true);
   };
@@ -151,7 +156,8 @@ const App: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  //date
+
+  //*********************************** function show date  ***************************
   const onChangeMonth: DatePickerProps["onChange"] = (date, dateString) => {
     const dayjsDate = dayjs(date);
     console.log(dayjsDate.format("MMMM YYYY"));
@@ -165,13 +171,9 @@ const App: React.FC = () => {
       dataIndex: `${i}`,
       width: 60,
       key: "date",
-      // className: "custom-column-class",
       render: (text: string, record: any) => {
         if (
-          record.category === "Repeat" ||
-          record.category === "Scrap" ||
-          record.category === "Repeat NG"
-        ) {
+          record.category === "Repeat" || record.category === "Scrap" || record.category === "Repeat NG"){
           return <a onClick={showModal}> 0 </a>;
         }
       },
@@ -200,17 +202,14 @@ const App: React.FC = () => {
       key: "item",
       fixed: "left",
       width: "300px",
-      onCell: (_, index) => {
+      onCell: (record, index) => {
         const index_colspan = [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0];
-        //const index_rowspan = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 
         return {
           colSpan: index_colspan[index as number],
-          //rowspan: index_rowspan[index as number] * DataList.length
+          //rowSpan: record.item !== undefined ? record.item : 1,
+
         };
-      },
-      render: () => {
-        return <span> {DataList} </span>;
       },
     },
     {
@@ -236,18 +235,20 @@ const App: React.FC = () => {
         return { colSpan: indexcolspan[index as number] };
       },
       render: () => {
+        
         return <span> {DataList} </span>;
       },
     },
   ];
 
+
   //TODO: Rotate text category
   //data in column
   const data: DataType[] = [
-    { key: "1", category: "Prod. QTY(n)", item: "", target: "" },
-    { key: "2", category: "Defect QTY(np)", item: "", target: "" },
+    { key: "1", category: "Prod. QTY (n)", item: "", target: "" },
+    { key: "2", category: "Defect QTY (np)", item: "", target: "" },
     { key: "3", category: "Defect Ration", item: "", target: "" },
-    { key: "4", category: "Repeat", item: "aaa", target: "" },
+    { key: "4", category: "Repeat", item: "", target: "" },
     { key: "5", category: "Scrap", item: "", target: "" },
     { key: "6", category: "Repeat NG", item: "", target: "" },
     { key: "7", category: "MC Set Up", item: "", target: "" },
@@ -262,7 +263,7 @@ const App: React.FC = () => {
     <>
       <div className="header" style={{ margin: "30px" }}>
         <Form className="select_form" layout="inline" form={form}>
-          <FormItem name="date" label={<span className="title">Date</span>}>
+          <FormItem name="date" label={<span className="title"> Date </span>}>
             <DatePicker picker="month" onChange={onChangeMonth} />
           </FormItem>
 
@@ -283,18 +284,11 @@ const App: React.FC = () => {
               placeholder="Select Line Name"
               onSelect={(value) => console.log("Selected line_id:", value)}
               onChange={(value) => console.log("Selected line_id:", value)}
-              // optionLabelProp="children"
-              // filterOption = {(input, option) =>
-              //   ((option?.label as string) ?? "")
-              //   .toLowerCase()
-              //   .includes(input.toLowerCase())
-              // }
             >
               {distinct_linename.map((item: any) => (
                 <Select.Option
                   key={item.line_id}
                   value={item.line_id}
-                  // lable = {item.line_name}
                 >
                   {item.line_name}
                 </Select.Option>
@@ -304,7 +298,7 @@ const App: React.FC = () => {
 
           <FormItem
             name="Shift"
-            label={<span className="title">Shift</span>}
+            label={<span className="title"> Shift </span>}
             rules={[
               {
                 required: true,
@@ -313,7 +307,7 @@ const App: React.FC = () => {
             ]}
           >
             <Radio.Group
-              defaultValue="A"
+              defaultValue="a"
               buttonStyle="solid"
               onChange={ShiftChange}
             >
@@ -324,7 +318,7 @@ const App: React.FC = () => {
 
           {/* TODO: check rules when part_no === undefiled */}
           <FormItem
-            name="Part_Number"
+            name="Part Number"
             label={<span className="title"> Part Number </span>}
             rules={[
               {
@@ -383,12 +377,11 @@ const App: React.FC = () => {
             buttonStyle="solid"
             onChange={handleChangeChart}
           >
-            <Radio.Button value="p_chart">P Chart</Radio.Button>
-            <Radio.Button value="pareto">Pareto Chart</Radio.Button>
+            <Radio.Button value="p_chart"> P Chart </Radio.Button>
+            <Radio.Button value="pareto"> Pareto Chart </Radio.Button>
           </Radio.Group>
         </span>
       </div>
-
       {ChangeChart === "pareto" ? (
         <div
           ref={ChartRef}
@@ -404,7 +397,6 @@ const App: React.FC = () => {
           <DemoDualAxesa />
         </div>
       )}
-
 
       {/* <Modalshow isOpen={{open}} /> */}
       <Table

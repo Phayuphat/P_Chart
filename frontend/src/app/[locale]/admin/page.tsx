@@ -20,33 +20,21 @@ import {
   DeleteOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
-import type * as antd from "antd";
-// import environment from "@/app/utils/environment";
+import environment from "@/utils/environment";
 import axiosInstance from "@/lib/axios";
 import { TabsProps } from "antd/lib";
-import { error } from "console";
-import { update } from "lodash";
-//import { data } from "autoprefixer";
 
 const App: React.FC = () => {
   const [form] = Form.useForm();
-  const [LineName, setLineName] = useState<any>([]);
-  const [PartNo, setPartNo] = useState<any>([]);
-  const [MaxId, setMaxId] = useState<number>(0);
-  const [EditingKey, setEditingKey] = useState("");
   const [TabKey, setTabKey] = useState<string>("Repeat");
+  const [LineName, setLineName] = useState<any>([]);
+  const [MaxId, setMaxId] = useState<number>(0);
+  const [AddRowClick, setAddRowClick] = useState(false);
+  const [EditingKey, setEditingKey] = useState("");
+  const [PartNo, setPartNo] = useState<any>([]);
   const [Repeat, setRepeat] = useState<any>([]);
   const [Scrap, setScrap] = useState<any>([]);
   const [RepeatNG, setRepeatNG] = useState<any>([]);
-  const [AddRowClick, setAddRowClick] = useState(false);
-  // const [Disable, setDisable] = useState(true)
-  
-  const { Search } = Input;
-  const [DataSource, setDataSource] = useState<any>([]);
-  const [Data, setData] = useState<Item[]>([]);
-  const [DefaultImage, setDefultImage] = useState<any>([]);
-  const [Category, setCategory] = useState<any>([]);
-
 
 
   //********************** set time thailand ***************************
@@ -73,85 +61,71 @@ const App: React.FC = () => {
     currentDate.getSeconds()
   ).padStart(2, "0")}`;
 
-
-
-  //********************** get_linename **************************
-  const fetch_linename = async () => {
-    try {
-      const response = await axiosInstance.get("/commons/get_linename");
-      if (response.status === 200) {
-        setLineName(response.data);
-        console.log("linename", response.data);
-      }
-    } catch (error) {
-      return error
+//********************** get linename **************************
+const fetch_linename = async () => {
+  try {
+    const response = await axiosInstance.get("/commons/get_linename");
+    if (response.status === 200) {
+      setLineName(response.data);
     }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+useEffect(() => {
+  fetch_linename();
+}, []);
+
+  //********************** get part no **************************
+  const GetPartNo = async (value: string) => {
+    try {
+      const response_process = await axiosInstance.get(
+        `/commons/get_part_no?line_id=${value}`
+      );
+      if (response_process.status === 200) {
+        setPartNo(response_process.data);
+      
+      }
+    } catch (err) {}
   };
 
   useEffect(() => {
-    fetch_linename();
-  }, []);
-
-  //********************** get_part_number **************************
-  const LineNameChange = async (value: number) => {
-    try {
-      const response_part_no = await axiosInstance.get(
-        `/commons/get_part_no?line_id=${value}`
-      );
-      if (response_part_no.status === 200) {
-        setPartNo(response_part_no.data);
-        console.log(response_part_no.data);
-      }
-    } catch (error) {
-      return error
+    if (form.getFieldValue("LineName") === undefined) {
+      form.resetFields(["Process"]);
+    } else {
+      form.resetFields(["Process"]);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.getFieldValue("LineName")]);
 
-  // useEffect(() => {
-  //   if (form.getFieldValue("LineName") === undefined) {
-  //     form.resetFields(["Part Number"]);
-  //   } else {
-  //     form.resetFields(["Part Number"]);
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [form.getFieldValue("LineName")]);
-
-  //************************** GET mode, target by item on edit-table ************
+ //************************** GET mode, target by item on edit-table ************
   const showData = async () => {
     setEditingKey("");
-    
+
     const line_id = form.getFieldValue("LineName") || "0";
+      console.log("line id", line_id)
     const part_no = form.getFieldValue("Part Number") || "0";
-    console.log("line_id", line_id)
-    const category = TabKey;
+      console.log("part no:", line_id)
+    const category = TabKey
+      console.log("category:", category )
 
-    const response_wi = await axiosInstance.get("/commons/get_wi_data");
-    console.log("res_wi", response_wi.data);
-
-    const responsedata = await axiosInstance.get("/commons/get_wi_table", {
+    const response_data_all= await axiosInstance.get("/commons/get_data_all");
+    const response_data_table = await axiosInstance.get("/commons/get_data_table", {
       params: {
         line_id: line_id,
         part_no: part_no,
-        category: category,
+        category: category
       },
     });
 
-    if (responsedata.status === 200 && line_id != 0 && part_no != 0) {
-      
-      const dataWithKeys = responsedata.data.map(
+    if (response_data_table.status === 200 && line_id != 0 && part_no != 0) {
+      const dataWithKeys = response_data_table.data.map(
         (item: any, index: number) => ({
           key: (index + 1).toString(),
-          // key: (index + 1),
           ...item,
         })
       );
-      console.log("dataWithKeys", dataWithKeys)
-
-      //TODO: MaxId is NaN
-      const maxId = Math.max(...response_wi.data.map((item: Item) => item.mode_id));
-            setMaxId(maxId);
-            console.log("maxID", maxId);
-
 
       if (TabKey === "Repeat") {
         setRepeat(dataWithKeys);
@@ -167,22 +141,17 @@ const App: React.FC = () => {
       }
     }
 
-    // if (response_wi.status === 200 ) {
-    //   const maxId = Math.max(...response_wi.data.map((item: Item) => item.mode_id));
-    //   setMaxId(maxId);
-    //   console.log("maxID", maxId);
-    // }
+    if (response_data_all.status === 200) {
+      const maxId = Math.max(...response_data_all.data.map((item: any) => item.id));
+      setMaxId(maxId);
+      console.log("max id:", maxId)
+    }
   };
 
-  //TODO: check function
   //**************** Add mode, target *******************
   const onAddButtonClick = () => {
     form.resetFields(["mode", "target"]);
 
-
-    
-    
-  //TODO: mode_id, id no reset realtime(newId is NaN)
     if (!EditingKey) {
       const newId = MaxId + 1;
 
@@ -190,9 +159,7 @@ const App: React.FC = () => {
         const newData: Item = {
           key: String(Repeat.length + 1),
           id: newId,
-          category: TabKey,
-          mode_id:newId,
-          mode: "",
+          mode:"",
           target: 0,
           update_at: time_thai,
         };
@@ -203,9 +170,7 @@ const App: React.FC = () => {
         const newData: Item = {
           key: String(Scrap.length + 1),
           id: newId,
-          category: TabKey,
-          mode_id:newId,
-          mode: "",
+          mode:"",
           target: 0,
           update_at: time_thai,
         };
@@ -216,9 +181,7 @@ const App: React.FC = () => {
         const newData: Item = {
           key: String(RepeatNG.length + 1),
           id: newId,
-          category: TabKey,
-          mode_id:newId,
-          mode: "",
+          mode:"",
           target: 0,
           update_at: time_thai,
         };
@@ -228,36 +191,51 @@ const App: React.FC = () => {
     }
   };
 
-  //****************** cancle if no data >>> delete row
-  const cancle = async (record: number) => {
+  const cancel = async () => {
     setEditingKey("");
   };
 
-  const onDeleteButtonClick = (key: React.Key) => {
-    let Current_Data;
+  //********************** delete row **************************************
+  const onDeleteButtonClick = async (key: React.Key) => {
     if (TabKey === "Repeat") {
-      Current_Data = [...Repeat];
+      const newData = Repeat.filter((item: any) => item.key !== key);
+      const updatedData = newData.map((item: any, index: any) => ({
+          ...item,
+          key: String(index + 1),
+        }));
+      setRepeat(updatedData);
     } else if (TabKey === "Scrap") {
-      Current_Data = [...Scrap];
+      const newData = Scrap.filter((item: any) => item.key !== key);
+      const updatedData = newData.map((item: any, index: any) => ({
+        ...item,
+        key: String(index + 1),
+      }));
+      setRepeat(updatedData);
     } else if (TabKey === "Repeat_NG") {
-      Current_Data = [...RepeatNG];
-    } else {
-      return;
+      const newData = RepeatNG.filter((item: any) => item.key !== key);
+      const updatedData = newData.map((item: any, index: any) => ({
+        ...item,
+        key: String(index + 1),
+      }));
+      setRepeat(updatedData);
     }
+  };
 
-    const update_data = Current_Data.filter((item: any) => item.key !== key);
-    if (TabKey === "Repeat") {
-      setRepeat(update_data);
-    } else if (TabKey === "Scrap") {
-      setScrap(update_data);
-    } else if (TabKey === "Repeat_NG") {
-      setRepeatNG(update_data);
+  //********************** API delete row **************************
+  const delete_row = async (id: id_row) => {
+    try {
+      const response = await axiosInstance.post("/commons/delete_row", id);
+      if (response.status === 200) {
+        message.success("Delete successfully");
+      }
+    } catch (error) {
+      console.error("Error delete data:", error);
     }
   };
 
   //********************** edit data on table ***************************
   const isEditing = (record: Item) => record.key === EditingKey;
-  //edit mode, target on table only
+  //edit part_number and plc_data only
   const edit = (record: Partial<Item> & { key: React.Key }) => {
     form.setFieldsValue({
       mode: "",
@@ -267,25 +245,137 @@ const App: React.FC = () => {
     setEditingKey(record.key);
   };
 
-  //********************** delete data all row in database **************************
-  const delete_row = async (record: any) => {
-    console.log("recordToDelete", record)
+    //************** tab change ********************************
+    const onTabChange = (key: string) => {
+      setEditingKey("");
+      setTabKey(key);
+      console.log("category key:",key);
+    };
+  
+  //save all data in 1 row to database
+  const savetoDb = async (savedItem: any, _: any) => {
+    const line_id = form.getFieldValue("LineName");
+    const part_no = form.getFieldValue("Part Number");
+    const category = TabKey
 
+    const upsertItem = {
+      line_id: line_id,
+      part_no: part_no,
+      category: category,
+      mode: savedItem.mode,
+      target: savedItem.target,
+      update_at: time_thai,
+    };
+
+    const editItem = {
+      id: savedItem.id,
+      line_id: line_id,
+      part_no: part_no,
+      category: category,
+      mode: savedItem.mode,
+      target: savedItem.target,
+      update_at: time_thai,
+    };
+
+    //if click add_row_click do post , if not do update
+    if (AddRowClick) {
+      post_edit_data(upsertItem);
+      setAddRowClick(false);
+      setEditingKey("");
+    } else {
+      update_row(editItem);
+    }
+  };
+
+  const save = async (key: React.Key) => {
+    setEditingKey("");
+  
     try {
-      const response = await axiosInstance.post("/commons/delete_row", record);
+      const row = await form.validateFields();
+      console.log("row_data", row);
+      const newData = {
+        "Repeat": [...new Set(Repeat)] as Item[],
+        "Scrap": [...new Set(Scrap)] as Item[],
+        "Repeat_NG": [...new Set(RepeatNG)] as Item[]
+      }[TabKey];
+      console.log("new_data", newData);
+  
+      if (newData) {
+        const index = newData.findIndex((item: Item) => key === item.key);
+        console.log("index_data", index);
+
+        if (index > -1) {
+          const item = newData[index];
+          const updatedItem = { ...item, ...row };
+  
+          const uniqueCheck = newData.every(
+            (item) =>
+              item.key === key || item.mode !== updatedItem.mode);
+              
+          if (!uniqueCheck) {
+            const duplicateItem = newData.find(
+              (item) => item.mode === updatedItem.mode && item.key !== key
+            );
+            
+            if (duplicateItem) {
+              message.error("Please change the mode, it must be unique!");
+            }
+            return
+          }
+  
+          const { key: omitKey, ...savedItem } = updatedItem;
+          newData.splice(index, 1, updatedItem);
+          setEditingKey("")
+          if (TabKey === "Repeat") {
+            setRepeat(newData);
+            savetoDb(savedItem, updatedItem);
+          }
+          if (TabKey === "Scrap") {
+            setScrap(newData);
+            savetoDb(savedItem, updatedItem);
+          }
+          if (TabKey === "Repeat_NG") {
+            setRepeatNG(newData);
+            savetoDb(savedItem, updatedItem);
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  //*************** API post (post_edit_data) ********** condition for post use with add row (true) ***********
+  const post_edit_data = async (upsertItem: EditData) => {
+    try {
+      const response = await axiosInstance.post(
+        "/commons/post_row_data",
+        upsertItem
+      );
       if (response.status === 200) {
-        message.success("Delete successfully");
+        showData()
+        message.success("Upload successfully");
+      } 
+    } catch (error) {
+      console.error("Error Upload data:", error);
+    }
+  };
+
+
+  //********************** API update (put_edit_wi) ***** condition for post use with edit (true), add row(false) **********
+  const update_row = async (upsertItem: UpData) => {
+    // console.log("Update Row:", upsertItem);
+    try {
+      const response = await axiosInstance.put(
+        "/commons/put_update_data",
+        upsertItem
+      );
+      if (response.status === 200) {
+        message.success("Update successfully");
       }
     } catch (error) {
       console.error("Error delete data:", error);
     }
-  };
-
-  //************** tab change ********************************
-  const onTabChange = (key: string) => {
-    setEditingKey("");
-    setTabKey(key);
-    console.log(key);
   };
 
   const unique = new Set();
@@ -302,143 +392,13 @@ const App: React.FC = () => {
   });
 
 
-  //********************* save data row by row to database **************************
-  const saveToDatabase = async (saveItem: any) => {
-    const line_id = form.getFieldValue("LineName");
-    const part_no = form.getFieldValue("Part Number");
-    const upsertItem = {
-      line_id: line_id,
-      part_no: part_no,
-      category: saveItem.category,
-      mode_id:saveItem.mode_id,
-      mode: saveItem.mode,
-      target:saveItem.target,
-      update_at: time_thai 
-    };
-    
-  
-    const editItem = {
-      mode_id: saveItem.mode_id,
-      mode: saveItem.mode,
-      // target:saveItem.target,
-      update_at: time_thai
-    }
-    console.log("id", saveItem.id)
-
-
-    if (AddRowClick) {
-      save_to_database(upsertItem)
-      setAddRowClick(false)
-      setEditingKey("");
-    } else {
-      update_row(editItem)
-    }
-  };
-
-  const update_row = async (upsertItem: Updata) => {
-    console.log("update_data", upsertItem)
-    try {
-      const response_update_data = await axiosInstance.put("/commons/put_edit_data", upsertItem);
-    
-      if (response_update_data.status === 200) {
-        message.success("Updata Success")
-      }
-    }
-    catch (error) {
-      return error
-    }
-  }
-
-  
-  const save = async (key: React.Key) => {
-    setEditingKey("");
-
-    try {
-      const row_data = await form.validateFields();
-      console.log("row_data", row_data);
-  
-      const newData = {
-        "Repeat": [...new Set(Repeat)] as Item[],
-        "Scrap": [...new Set(Scrap)] as Item[],
-        "Repeat_NG": [...new Set(RepeatNG)] as Item[]
-      }[TabKey];
-      console.log("new_data", newData);
-  
-      if (newData) {
-        const index = newData.findIndex((item: Item) => key === item.key);
-        if (index !== -1) {
-          const item = newData[index];
-          console.log("item", item);
-  
-          const updateItem = { ...item, ...row_data };
-          console.log("update_item", updateItem);
-          
-          // //TODO: check function
-          // const uniqueCheck = newData.every(
-          //   (item) => key !== item.key || item.mode !== updateItem.mode
-          // );
-          
-          // if (uniqueCheck) {
-          //   message.error("Please Change Defect Mode, it must be unique!");
-          // } else {
-          //   return;
-          // }
-  
-          const { key: omitKey, ...saveItem } = updateItem;
-          console.log("save_item", saveItem);
-  
-          newData.splice(index, 1, saveItem);
-          if (TabKey === "Repeat") {
-            setRepeat(newData);
-            saveToDatabase(saveItem);
-          }
-          if (TabKey === "Scrap") {
-            setScrap(newData);
-            saveToDatabase(saveItem);
-          }
-          if (TabKey === "Repeat_NG") {
-            setRepeatNG(newData);
-            saveToDatabase(saveItem);
-          }
-        }
-      }
-    } catch (error) {
-      return error;
-    }
-  };
-
-  useEffect(() => {
-    if (form.getFieldValue("mode") !== undefined) {
-      showData();
-    }
-  }, [])
-
-  const save_to_database = async (upsertItem: EditData) => {
-    try {
-      const response_post = await axiosInstance.post("/commons/post_edit_data", upsertItem);
-
-      if (response_post.status === 200){
-        message.success("Upload Data Success")
-      } else {
-        return ("Upload Error")
-      }
-    }
-    catch (error) {
-      return error;
-    }
-  }
-
-
-
-
-
 
   const columns = [
     {
       title: "Mode",
       dataIndex: "mode",
       editable: true,
-      render: (text: string, record: Item) => {
+      render: (_: any, record: Item) => {
         const editable = isEditing(record);
         return editable ? (
           <Form.Item
@@ -446,7 +406,7 @@ const App: React.FC = () => {
             rules={[
               {
                 required: true,
-                message: `Please Input Mode`,
+                message: `Please Input Defect Mode`,
               },
             ]}
           >
@@ -455,13 +415,13 @@ const App: React.FC = () => {
         ) : (
           record.mode
         );
-      },
+      }
     },
     {
-      title: "Target by Item",
+      title: "Target by Items",
       dataIndex: "target",
       editable: true,
-      render: (text: any, record: Item) => {
+      render: (_: any, record: Item) => {
         const editable = isEditing(record);
         return editable ? (
           <Form.Item
@@ -469,7 +429,7 @@ const App: React.FC = () => {
             rules={[
               {
                 required: true,
-                message: `Please Input Target by Item`,
+                message: `Please Input Target by Items`,
               },
             ]}
           >
@@ -484,8 +444,10 @@ const App: React.FC = () => {
       title: "Update Time",
       dataIndex: "update_at",
       width: 250,
-      render: (_: any, record: Item) => (
-        <div className="update_at"> {record.update_at} </div>
+      render: (update_at: string) => (
+        <div className="update_at">
+          {update_at}
+        </div>
       ),
     },
 
@@ -503,7 +465,6 @@ const App: React.FC = () => {
                   <Button
                     type="primary"
                     onClick={() => save(record.key)}
-                    //disabled={Disable}
                     style={{
                       boxShadow: "3px 3px 10px ",
                       width: "50px",
@@ -520,14 +481,14 @@ const App: React.FC = () => {
                   <Button
                     type="primary"
                     onClick={async () => {
-                      // const ID = {
-                      //   id: record.id,
-                      // };
-                      if (record.mode !== "" && record.target !== 0) {
-                        cancle(record.id);
+                      const ID = {
+                        id: record.id,
+                      };
+                      if (record.mode !== "") {
+                        cancel();
                       } else {
                         onDeleteButtonClick(record.key);
-                        delete_row(record.id);
+                        delete_row(ID);
                         setEditingKey("");
                       }
                     }}
@@ -546,7 +507,7 @@ const App: React.FC = () => {
                 <Tooltip title="Edit">
                   <Button
                     type="primary"
-                    // disabled={EditingKey === "" && EditingKey !== record.key}
+                    disabled={EditingKey !== "" && EditingKey !== record.key}
                     onClick={() => {
                       edit(record);
                     }}
@@ -565,17 +526,17 @@ const App: React.FC = () => {
                     title="Sure to delete?"
                     onConfirm={async () => {
                       const ID = {
-                        id: record.mode_id,
+                        id: record.id,
                       };
                       onDeleteButtonClick(record.key);
                       delete_row(ID);
-                      console.log("row_id", record.mode_id)
+                      console.log("row_id", record.id)
                     }}
                   >
                     <Button
                       type="primary"
                       danger
-                      // disabled={EditingKey !== "" && EditingKey !== record.key}
+                      disabled={EditingKey !== "" && EditingKey !== record.key}
                       style={{
                         boxShadow: "3px 3px 10px 0px",
                         width: "50px",
@@ -616,20 +577,20 @@ const App: React.FC = () => {
       label: "Repeat",
       children: (
         <Table
-          className="edit_table"
-          dataSource={Repeat}
-          columns={mergedColumns as any}
-          rowClassName="editable-row"
-          pagination={false}
-          scroll={{ y: 590 }}
-          rowKey={(record: any) => record.key}
-          style={{ paddingBottom: "0.5rem" }}
-          onRow={(record: Item) => ({
-            onClick: async () => {
-              console.log("tarrrrrrrrr",record);
-            },
-          })}
-        />
+        className="edit_table"
+        dataSource={Repeat}
+        columns={mergedColumns}
+        rowClassName="editable-row"
+        pagination={false}
+        scroll={{ y: 590 }}
+        rowKey={(record: any) => record.key}
+        style={{ paddingBottom: "0.5rem" }}
+        onRow={(record: Item) => ({
+          onClick: async () => {
+            console.log("row_repeat_data",record);
+          },
+        })}
+      />
       ),
     },
     {
@@ -637,20 +598,20 @@ const App: React.FC = () => {
       label: "Scrap",
       children: (
         <Table
-          className="edit_table"
-          dataSource={Scrap}
-          columns={mergedColumns as any}
-          rowClassName="editable-row"
-          pagination={false}
-          scroll={{ y: 590 }}
-          rowKey={(record: any) => record.key}
-          onRow={(record: Item) => ({
-            onClick: async () => {
-              console.log(record);
-            },
-          })}
-          style={{ paddingBottom: "0.5rem" }}
-        />
+        className="edit_table"
+        dataSource={Scrap}
+        columns={mergedColumns}
+        rowClassName="editable-row"
+        pagination={false}
+        scroll={{ y: 590 }}
+        rowKey={(record: any) => record.key}
+        style={{ paddingBottom: "0.5rem" }}
+        onRow={(record: Item) => ({
+          onClick: async () => {
+            console.log("row_scrap_data",record);
+          },
+        })}
+      />
       ),
     },
     {
@@ -658,23 +619,24 @@ const App: React.FC = () => {
       label: "Repeat NG",
       children: (
         <Table
-          className="edit_table"
-          dataSource={RepeatNG}
-          columns={mergedColumns as any}
-          rowClassName="editable-row"
-          pagination={false}
-          scroll={{ y: 590 }}
-          rowKey={(record: any) => record.key}
-          onRow={(record: Item) => ({
-            onClick: async () => {
-              console.log(record);
-            },
-          })}
-          style={{ paddingBottom: "0.5rem" }}
-        />
+        className="edit_table"
+        dataSource={RepeatNG}
+        columns={mergedColumns}
+        rowClassName="editable-row"
+        pagination={false}
+        scroll={{ y: 590 }}
+        rowKey={(record: any) => record.key}
+        style={{ paddingBottom: "0.5rem" }}
+        onRow={(record: Item) => ({
+          onClick: async () => {
+            console.log("row_repeat_ng_data",record);
+          },
+        })}
+      />
       ),
     },
   ];
+
 
   return (
     <div>
@@ -683,31 +645,26 @@ const App: React.FC = () => {
           <Form
             className="form_selector"
             form={form}
-            // onFinish={(x) => console.log(x)}
+            onFinish={(x) => console.log(x)}
           >
             <FormItem
               name="LineName"
-              rules={[
-                {
-                  required: true,
-                  message: "Line Name is required",
-                },
-              ]}
-              label={<span className="label_name"> Line Name </span>}
+              rules={[{ required: true, message: "LineName is required" }]}
+              label={<span className="label_name">Line Name</span>}
             >
               <Select
                 showSearch
                 placeholder="Select a LineName"
                 style={{ width: 450 }}
-                onSelect={(value) => LineNameChange(value)}
-                onChange={(value) => LineNameChange(value)}
+                onSelect={GetPartNo}
+                onChange={GetPartNo}
                 allowClear
               >
                 {distinct_line_name.map((item: any) => (
                   <Select.Option
                     key={item.line_id}
                     value={item.line_id}
-                    // label={item.line_name}
+                    
                   >
                     {item.line_name}
                   </Select.Option>
@@ -717,12 +674,7 @@ const App: React.FC = () => {
 
             <FormItem
               name="Part Number"
-              rules={[
-                {
-                  required: true,
-                  message: "Part Number is required",
-                },
-              ]}
+              rules={[{ required: true, message: "Part Number is required" }]}
               label={<span className="label_name"> Part Number </span>}
             >
               <Select
@@ -730,15 +682,11 @@ const App: React.FC = () => {
                 allowClear
                 placeholder="Select a Part Number"
                 style={{ width: 350 }}
-                // onSelect={PartNoChange}
-                // onChange={PartNoChange}
-                // disabled={distinct_process < 1}
               >
                 {distinct_part_no.map((item: any) => (
                   <Select.Option
                     key={item.part_id}
                     value={item.part_no}
-                    // label={item.part_no}
                   >
                     {item.part_no}
                   </Select.Option>
@@ -762,36 +710,39 @@ const App: React.FC = () => {
       </div>
 
       <div>
-        <Form
-          form={form}
-          className="tab_category"
-          // component={false}
-        >
-          <Tabs
-            type="card"
-            defaultActiveKey="Repeat"
-            items={items}
-            style={{ paddingTop: "0.5rem" }}
-            onChange={onTabChange}
-            tabBarExtraContent={
-              <FormItem className="form_add_image">
-                <Tooltip title="Add Defect Mode">
-                  <Button
-                    type="primary"
-                    onClick={() => {
-                      onAddButtonClick();
-                      setAddRowClick(true);
-                    }}
-                    style={{ boxShadow: "3px 3px 10px 0px" }}
-                    icon={<PlusOutlined />}
-                    // disabled={IsDisabled}
-                  >
-                    Add
-                  </Button>
-                </Tooltip>
-              </FormItem>
-            }
-          ></Tabs>
+        <Form 
+          form={form} 
+          component={false}
+          >
+
+          <div className="table_container">
+            <Tabs 
+              type="card"
+              items={items}
+              style={{paddingTop:"0.5rem"}}
+              onChange={onTabChange}
+              tabBarExtraContent={
+                <FormItem className="form_add_mode">
+                  <Tooltip title="Add Defect Mode">
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        onAddButtonClick();
+                        setAddRowClick(true);
+                      }}
+                      style={{
+                        boxShadow: "3px 3px 10px 0px",
+                      }}
+                      icon={<PlusOutlined />}
+                      >
+                        Add
+                    </Button>
+                  </Tooltip>
+                </FormItem>
+              }
+              
+              />
+          </div>
         </Form>
       </div>
     </div>

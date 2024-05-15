@@ -6,7 +6,7 @@ import json
 import string
 import os
 from app.schemas.commons import (
-    LineName,wi_table,delete_a_row,PostData, part_no,Data,Up_Data
+    part_no, Update, LineName, data_table, delete_a_row, PostData, DataAll, DataGraph
 )
 from app.manager import CommonsManager
 from app.functions import api_key_auth
@@ -17,7 +17,7 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
     router = APIRouter()
     manager = CommonsManager()
 
-    # ? ====================  API: Admin page =====================================================
+# ? ================================ admin page ==============================================
     @router.get(
             "/get_linename",
             response_model=List[LineName],
@@ -27,9 +27,9 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
             try:
                 line_name = await manager.get_linename(db=db)
                 return list(line_name)
-            except Exception as error:
+            except Exception as e:
                 raise HTTPException(
-                    status_code=400, detail=f"Error during get data : {error}"
+                    status_code=400, detail=f"Error during get data : {e}"
                 )
 
     @router.get(
@@ -48,39 +48,51 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
                 )
 
     @router.get(
-            "/get_wi_data",
-            response_model=List[Data],
+            "/get_data_all",
+            response_model=List[DataAll],
             dependencies=[Depends(api_key_auth)],
         )
-    async def get_wi_data(db: AsyncSession = Depends(db)):
+    async def get_data_all(db: AsyncSession = Depends(db)):
             try:
-                data_wi = await manager.get_wi_data(db=db)
+                data_wi = await manager.get_data_all(db=db)
                 return list(data_wi)
             except Exception as e:
                 raise HTTPException(
                     status_code=400, detail=f"Error during get data : {e}"
                 )
-        
+
     @router.get(
-        "/get_wi_table",
-        response_model=List[wi_table],
+        "/get_data_table",
+        response_model=List[data_table],
         dependencies=[Depends(api_key_auth)],
     )
-    async def get_wi_table(line_id=int, part_no=str, category=str, db: AsyncSession = Depends(db)):
+    async def get_data_table(line_id=str, part_no=str, category=str, db: AsyncSession = Depends(db)):
         try:
-            wi_table = await manager.get_wi_table(line_id=line_id, part_no=part_no, category=category, db=db)
-            return list(wi_table)
+            data_table = await manager.get_data_table(line_id=line_id, part_no=part_no,category=category, db=db)
+            return list(data_table)
         except Exception as e:
             raise HTTPException(
                 status_code=400, detail=f"Error during get data : {e}"
             )
 
     @router.post(
+        "/post_row_data",
+        dependencies=[Depends(api_key_auth)],
+    )
+    async def post_row_data(item:PostData, db: AsyncSession = Depends(db)):
+        try:
+            row_data = await manager.post_row_data(item=item,db=db)
+            return {"success": True}
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Error during update : {e}"
+            )
+
+    @router.post(
             "/delete_row",
             dependencies=[Depends(api_key_auth)],
         )
-    async def delete_row(item: delete_a_row,db: AsyncSession = Depends(db)):
-            # print("hello555",item)
+    async def delete_row(item:delete_a_row,db: AsyncSession = Depends(db)):
             try:
                 delete_row = await manager.delete_row(item=item,db=db)
                 return {"success": True}
@@ -88,56 +100,49 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
                 raise HTTPException(
                     status_code=400, detail=f"Error during update : {e}"
                 )
-        
+
     @router.put(
-        "/put_edit_data",
+        "/put_update_data",
         dependencies=[Depends(api_key_auth)],
     )
-    async def put_edit_wi(item: Up_Data, db: AsyncSession = Depends(db)):
+    async def put_update_data(item: Update, db: AsyncSession = Depends(db)):
         try:
-            
-            update_data = await manager.put_edit_data(item=item, db=db)
+            update_data = await manager.put_update_data(item=item, db=db)
             return {"success": True}
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Error during update : {e}")
-        
-        
-    @router.post(
-        "/post_edit_data",
-        dependencies=[Depends(api_key_auth)],
-    )
-    async def post_edit_data(item:PostData, db: AsyncSession = Depends(db)):
-        print("hello",item)
-        try:
-            post_edit_data = await manager.post_edit_data(item=item,db=db)
-            return {"success": True}
-        except Exception as e:
-            raise HTTPException(
-                status_code=400, detail=f"Error during update : {e}"
-            )
 
 
-    # ? ========================= graph page ============================================== 
-
+# ? ================================ graph page ==============================================
     @router.get(
-        "/get_data_table",
-        response_model=List[wi_table],
+        "/get_data_graph",
+        response_model=List[data_table],
         dependencies=[Depends(api_key_auth)],
     )
-    async def get_data_table(line_id=int, part_no=str, db: AsyncSession = Depends(db)):
+    async def get_data_graph(line_id=str, part_no=str, db: AsyncSession = Depends(db)):
         try:
-            wi_table = await manager.get_data_table(line_id=line_id, part_no=part_no, db=db)
-            return list(wi_table)
+            data_graph = await manager.get_data_graph(line_id=line_id, part_no=part_no, db=db)
+            return list(data_graph)
         except Exception as e:
             raise HTTPException(
                 status_code=400, detail=f"Error during get data : {e}"
             )
-        
 
+    # @router.get(
+    #         "/get_data_table",
+    #         response_model=List[data_table],
+    #         dependencies=[Depends(api_key_auth)],
+    #     )
+    # async def get_data_table(line_id=str, part_no=str, category=str, db: AsyncSession = Depends(db)):
+    #         try:
+    #             data_table = await manager.get_data_table(line_id=line_id, part_no=part_no,category=category, db=db)
+    #             return list(data_table)
+    #         except Exception as e:
+    #             raise HTTPException(
+    #                 status_code=400, detail=f"Error during get data : {e}"
+    #             )
 
     return router
-
-
 
 
     # @router.post("/upload", response_model=List[dict])
