@@ -135,7 +135,7 @@ useEffect(() => {
         setScrap(dataWithKeys);
         // setDisable(false)
       }
-      if (TabKey === "Repeat_NG") {
+      if (TabKey === "Repeat NG") {
         setRepeatNG(dataWithKeys);
         //setDisable(false)
       }
@@ -177,7 +177,7 @@ useEffect(() => {
         setScrap([...Scrap, newData]);
         setEditingKey(newData.key);
       }
-      if (TabKey === "Repeat_NG") {
+      if (TabKey === "Repeat NG") {
         const newData: Item = {
           key: String(RepeatNG.length + 1),
           id: newId,
@@ -211,7 +211,7 @@ useEffect(() => {
         key: String(index + 1),
       }));
       setRepeat(updatedData);
-    } else if (TabKey === "Repeat_NG") {
+    } else if (TabKey === "Repeat NG") {
       const newData = RepeatNG.filter((item: any) => item.key !== key);
       const updatedData = newData.map((item: any, index: any) => ({
         ...item,
@@ -296,7 +296,7 @@ useEffect(() => {
       const newData = {
         "Repeat": [...new Set(Repeat)] as Item[],
         "Scrap": [...new Set(Scrap)] as Item[],
-        "Repeat_NG": [...new Set(RepeatNG)] as Item[]
+        "Repeat NG": [...new Set(RepeatNG)] as Item[]
       }[TabKey];
       console.log("new_data", newData);
   
@@ -334,7 +334,7 @@ useEffect(() => {
             setScrap(newData);
             savetoDb(savedItem, updatedItem);
           }
-          if (TabKey === "Repeat_NG") {
+          if (TabKey === "Repeat NG") {
             setRepeatNG(newData);
             savetoDb(savedItem, updatedItem);
           }
@@ -615,7 +615,7 @@ useEffect(() => {
       ),
     },
     {
-      key: "Repeat_NG",
+      key: "Repeat NG",
       label: "Repeat NG",
       children: (
         <Table
