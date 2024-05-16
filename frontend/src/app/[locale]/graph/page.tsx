@@ -196,7 +196,7 @@ const App: React.FC = () => {
       fixed: "left",
       width: "100px",
       onCell: (_, index) => {
-        if (index === 3 || index === 6 || index === 7) {
+        if (index === 3 ) {
           return { colSpan: 1 };
         } else if (index === 4) {
           return { colSpan: 1 };
@@ -215,7 +215,7 @@ const App: React.FC = () => {
       fixed: "left",
       width: "300px",
       onCell: (_, index) => {
-        if (index === 3 || index === 4 || index === 5 || index === 6 || index === 7) {
+        if (index === 3 || index === 4 || index === 5 ) {
           return { colSpan: 1 };
         } else {
           return { colSpan: 0 };
@@ -230,7 +230,7 @@ const App: React.FC = () => {
       colSpan: 0,
       width: "70px",
       onCell: (_, index) => {
-        if (index === 3 || index === 4 || index === 5 || index === 6 || index === 7) {
+        if (index === 3 || index === 4 || index === 5 ) {
           return { colSpan: 1 };
         } else {
           return { colSpan: 0 };
