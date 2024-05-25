@@ -161,7 +161,7 @@ useEffect(() => {
           id: newId,
           mode:"",
           target: 0,
-          update_at: time_thai,
+          
         };
         setRepeat([...Repeat, newData]);
         setEditingKey(newData.key);
@@ -172,7 +172,7 @@ useEffect(() => {
           id: newId,
           mode:"",
           target: 0,
-          update_at: time_thai,
+          
         };
         setScrap([...Scrap, newData]);
         setEditingKey(newData.key);
@@ -183,7 +183,7 @@ useEffect(() => {
           id: newId,
           mode:"",
           target: 0,
-          update_at: time_thai,
+          
         };
         setRepeatNG([...RepeatNG, newData]);
         setEditingKey(newData.key);
@@ -264,7 +264,7 @@ useEffect(() => {
       category: category,
       mode: savedItem.mode,
       target: savedItem.target,
-      update_at: time_thai,
+      
     };
 
     const editItem = {
@@ -274,7 +274,7 @@ useEffect(() => {
       category: category,
       mode: savedItem.mode,
       target: savedItem.target,
-      update_at: time_thai,
+      
     };
 
     //if click add_row_click do post , if not do update
@@ -345,7 +345,7 @@ useEffect(() => {
     }
   };
 
-  //*************** API post (post_edit_data) ********** condition for post use with add row (true) ***********
+  //******* API post (post_edit_data) ********** condition for post use with add row (true) ***********
   const post_edit_data = async (upsertItem: EditData) => {
     try {
       const response = await axiosInstance.post(
@@ -362,7 +362,7 @@ useEffect(() => {
   };
 
 
-  //********************** API update (put_edit_wi) ***** condition for post use with edit (true), add row(false) **********
+  //****** API update (put_edit_wi) ***** condition for post use with edit (true), add row(false) **********
   const update_row = async (upsertItem: UpData) => {
     // console.log("Update Row:", upsertItem);
     try {
@@ -390,8 +390,6 @@ useEffect(() => {
     unique.add(entry.part_no);
     return isUnique;
   });
-
-
 
   const columns = [
     {
@@ -440,16 +438,16 @@ useEffect(() => {
         );
       },
     },
-    {
-      title: "Update Time",
-      dataIndex: "update_at",
-      width: 250,
-      render: (update_at: string) => (
-        <div className="update_at">
-          {update_at}
-        </div>
-      ),
-    },
+    // {
+    //   title: "Update Time",
+    //   dataIndex: "update_at",
+    //   width: 250,
+    //   render: (update_at: string) => (
+    //     <div className="update_at">
+    //       {update_at}
+    //     </div>
+    //   ),
+    // },
 
     {
       title: "Action",

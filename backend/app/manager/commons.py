@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud import CommonsCRUD
 from app.schemas.commons import (
-LineName, part_no, DataAll, data_table, delete_a_row, Update, DataGraph
+LineName, part_no, DataAll, data_table, delete_a_row, Update, DataGraph, Approval, data_mode, Post_np, Qty,  part_record
 )
 import json
 from typing import Optional, List, Dict, Any, Union
@@ -31,10 +31,10 @@ class CommonsManager:
 
     async def get_part_no(
                 self,
-                
+                line_id=str,
                 db: AsyncSession = None,
             ):
-                res = await self.crud.get_part_no(db=db)
+                res = await self.crud.get_part_no(line_id=line_id, db=db)
                 return_list = []
                 for r in res:
                     print(r)
@@ -64,7 +64,7 @@ class CommonsManager:
                         part_no = r[key_index["part_no"]],
                         mode = r[key_index["mode"]],
                         category = r[key_index["category"]],
-                        update_at = r[key_index["update_at"]],
+                        
                     )
                 )
             return return_list
@@ -89,7 +89,7 @@ class CommonsManager:
                         category = r[key_index["category"]],
                         mode = r[key_index["mode"]],
                         target = r[key_index["target"]],
-                        update_at = r[key_index["update_at"]],
+                        
                     )
                 )
             return return_list
@@ -99,7 +99,7 @@ class CommonsManager:
             item: data_table,
             db: AsyncSession = None,
         ):
-            print("edit",item)
+            
             await self.crud.post_row_data(db=db, item=item)
             return True
 
@@ -123,26 +123,106 @@ class CommonsManager:
     
 
 # ? ================================ graph page ==============================================
-    async def get_data_graph(
+    async def get_data_mode(
             self,
+            year=str,
+            mount=str,
             line_id=str,
             part_no=str,
             db: AsyncSession = None,
         ):
-            res = await self.crud.get_data_graph(db=db, line_id=line_id, part_no=part_no)
+            res = await self.crud.get_data_mode(year=year, mount=mount, db=db, line_id=line_id, part_no=part_no)
             return_list = []
             for r in res:
                 print(r)
                 key_index = r._key_to_index
                 return_list.append(
-                    data_table(
+                    data_mode(
                         id = r[key_index["id"]],
                         line_id = r[key_index["line_id"]],
                         part_no = r[key_index["part_no"]],
                         category = r[key_index["category"]],
                         mode = r[key_index["mode"]],
                         target = r[key_index["target"]],
-                        update_at = r[key_index["update_at"]],
+                        quantity = r[key_index["quantity"]],
+                        record_date = r[key_index["record_date"]]
                     )
                 )
             return return_list
+        
+    async def get_data_approval(
+            self,
+            year=str,
+            mount=str,
+            line_id=str,
+            
+            db: AsyncSession = None,
+        ):
+            res = await self.crud.get_data_approval(year=year, mount=mount, db=db, line_id=line_id)
+            return_list = []
+            for r in res:
+                print(r)
+                key_index = r._key_to_index
+                return_list.append(
+                    Approval(
+                        id = r[key_index["id"]],
+                        name = r[key_index["name"]],
+                        approval_date = r[key_index["approval_date"]],
+                        type = r[key_index["type"]],
+                        
+                    )
+                )
+            return return_list
+        
+    async def get_data_qty(
+            self,
+            year=str,
+            mount=str,
+            
+            db: AsyncSession = None,
+        ):
+            res = await self.crud.get_data_qty(year=year, mount=mount, db=db)
+            return_list = []
+            for r in res:
+                print(r)
+                key_index = r._key_to_index
+                return_list.append(
+                    Qty(
+                        id = r[key_index["id"]],
+                        qty = r[key_index["qty"]],
+                        date = r[key_index["date"]]     
+                    )
+                )
+            return return_list
+# ? ================================ modal for record quantity =======================================
+    async def post_np(
+                self,
+                
+                item:Post_np,
+                db: AsyncSession = None,
+            ):
+                
+                await self.crud.post_np(db=db, item=item)
+                return True
+    
+    async def get_part_record(
+                self,
+                line_id=str,
+                mode=str,
+                mount= str,
+                year=str,
+                db: AsyncSession = None,
+            ):
+                res = await self.crud.get_part_record(line_id=line_id, mount=mount, year=year, mode=mode,db=db)
+                return_list = []
+                for r in res:
+                    print(r)
+                    key_index = r._key_to_index
+                    return_list.append(
+                        part_record(
+                            part_no = r[key_index["part_no"]],
+                            category = r[key_index["category"]],
+                            # mode = r[key_index["mode"]],
+                        )
+                    )
+                return return_list

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any, Union
-import datetime
+from datetime import date
+from datetime import datetime
 
 class part_no(BaseModel):
     part_id:int
@@ -20,13 +21,13 @@ class DataAll(BaseModel):
     part_no:str
     mode:str
     category:str
-    update_at:str
+    
 
 class Update(BaseModel):
     id: int
     mode:str
     target:int
-    update_at:str
+    
 
 class data_table(BaseModel):
     id:int
@@ -35,7 +36,9 @@ class data_table(BaseModel):
     category:str
     mode:str
     target:int
-    update_at:str
+    
+    
+
 
 class PostData(BaseModel):
     line_id: int
@@ -43,7 +46,7 @@ class PostData(BaseModel):
     category: str
     mode: str
     target: int
-    update_at: str
+    
 
 class delete_a_row(BaseModel):
     id:Union[int, str]
@@ -58,3 +61,36 @@ class DataGraph(BaseModel):
     category:str
     target:int
     update_at:str
+    
+class Approval(BaseModel):
+    id: int
+    name:str
+    approval_date: date
+    type:str
+
+class Qty(BaseModel):
+    id: int
+    qty:int
+    date: date
+    
+class data_mode(BaseModel):
+    id:int
+    line_id:int
+    part_no:str
+    category:str
+    mode:str
+    target:int
+    quantity:int
+    record_date: Optional[date]
+    
+# ? ================================ modal for record quantity ==============================================
+class Post_np(BaseModel):
+    mode: str
+    date_record: str
+    part_no: str
+    count: int
+    
+class part_record(BaseModel):
+    part_no: str
+    category: str
+    # mode: str

@@ -6,7 +6,7 @@ import json
 import string
 import os
 from app.schemas.commons import (
-    part_no, Update, LineName, data_table, delete_a_row, PostData, DataAll, DataGraph
+    part_no, Update, LineName, data_table, delete_a_row, PostData, DataAll, DataGraph, Approval, data_mode, Post_np, Qty, part_record
 )
 from app.manager import CommonsManager
 from app.functions import api_key_auth
@@ -38,9 +38,9 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
             dependencies=[Depends(api_key_auth)],
         )
         
-    async def get_part_no( db: AsyncSession = Depends(db)):
+    async def get_part_no( line_id=str, db: AsyncSession = Depends(db)):
             try:
-                part_no = await manager.get_part_no(db=db)
+                part_no = await manager.get_part_no(line_id=line_id, db=db)
                 return list(part_no)
             except Exception as e:
                 raise HTTPException(
@@ -66,9 +66,9 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
         response_model=List[data_table],
         dependencies=[Depends(api_key_auth)],
     )
-    async def get_data_table(line_id=str, part_no=str, category=str, db: AsyncSession = Depends(db)):
+    async def get_data_table( line_id=str, part_no=str, category=str, db: AsyncSession = Depends(db)):
         try:
-            data_table = await manager.get_data_table(line_id=line_id, part_no=part_no,category=category, db=db)
+            data_table = await manager.get_data_table( line_id=line_id, part_no=part_no,category=category, db=db)
             return list(data_table)
         except Exception as e:
             raise HTTPException(
@@ -115,33 +115,81 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
 
 # ? ================================ graph page ==============================================
     @router.get(
-        "/get_data_graph",
-        response_model=List[data_table],
+        "/get_data_mode",
+        response_model=List[data_mode],
         dependencies=[Depends(api_key_auth)],
     )
-    async def get_data_graph(line_id=str, part_no=str, db: AsyncSession = Depends(db)):
+    async def get_data_mode(year=str, mount=str, line_id=str, part_no=str, db: AsyncSession = Depends(db)):
         try:
-            data_graph = await manager.get_data_graph(line_id=line_id, part_no=part_no, db=db)
-            return list(data_graph)
+            data_mode = await manager.get_data_mode(year=year, mount=mount, line_id=line_id, part_no=part_no, db=db)
+            return list(data_mode)
         except Exception as e:
             raise HTTPException(
                 status_code=400, detail=f"Error during get data : {e}"
             )
 
-    # @router.get(
-    #         "/get_data_table",
-    #         response_model=List[data_table],
-    #         dependencies=[Depends(api_key_auth)],
-    #     )
-    # async def get_data_table(line_id=str, part_no=str, category=str, db: AsyncSession = Depends(db)):
-    #         try:
-    #             data_table = await manager.get_data_table(line_id=line_id, part_no=part_no,category=category, db=db)
-    #             return list(data_table)
-    #         except Exception as e:
-    #             raise HTTPException(
-    #                 status_code=400, detail=f"Error during get data : {e}"
-    #             )
-
+    @router.get(
+        "/get_data_approval",
+        response_model=List[Approval],
+        dependencies=[Depends(api_key_auth)],
+    )
+    async def get_data_approval(year=str, mount=str, line_id=str, db: AsyncSession = Depends(db)):
+        try:
+            data_approval = await manager.get_data_approval(year=year, mount=mount, line_id=line_id, db=db)
+            return list(data_approval)
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Error during get data : {e}"
+            )
+    
+    @router.get(
+        "/get_data_qty",
+        response_model=List[Qty],
+        dependencies=[Depends(api_key_auth)],
+    )
+    async def get_data_qty(year=str, mount=str, db: AsyncSession = Depends(db)):
+        try:
+            data_qty = await manager.get_data_qty(year=year, mount=mount, db=db)
+            return list(data_qty)
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Error during get data : {e}"
+            )
+      
+# ? ================================ modal for record quantity =======================================
+    
+    @router.post(
+        "/post_np",
+        dependencies=[Depends(api_key_auth)],
+    )
+    async def post_np(item:Post_np, db:AsyncSession = Depends(db)):
+        try:
+            row_data = await manager.post_np(item=item , db=db)
+            return {"success": True}
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Error during update : {e}"
+            )
+    
+    @router.get(
+            "/get_part_record",
+            response_model=List[part_record],
+            dependencies=[Depends(api_key_auth)],
+        )
+        
+    async def get_part_record(year=str, mount=str, line_id=str, mode=str, db: AsyncSession = Depends(db)):
+            try:
+                part_no = await manager.get_part_record(line_id=line_id, mount=mount, year=year, mode=mode, db=db)
+                return list(part_no)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=400, detail=f"Error during get data : {e}"
+                )
+    
+    
+    
+    
+    
     return router
 
 
