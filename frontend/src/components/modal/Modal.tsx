@@ -371,7 +371,10 @@ const Modalshow: React.FC<ModalProps> = ({
           <Button
             className="save"
             type="primary"
-            onClick={save_np}
+            //TODO: เมื่อกด save ให้ทำการดึงข้อมูลออกมาเเสดงผลตามที่ทำการบันทึกไป
+            onClick={() => 
+              save_np
+            }
             style={{ margin: "5px", marginLeft: "900px" }}
           >
             Save

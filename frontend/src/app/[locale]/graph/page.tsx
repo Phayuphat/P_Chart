@@ -17,6 +17,7 @@ import DrawerMode from "@/components/drawer_mode/drawer_mode";
 import { values } from "lodash";
 import { count } from "console";
 import { text } from "stream/consumers";
+import Item from "antd/es/list/Item";
 
 const App: React.FC = () => {
   interface DataType {
@@ -46,8 +47,6 @@ const App: React.FC = () => {
   const [QTY, setQTY] = useState<any>([]);
   const [DateRecord, setDateRecord] = useState<any>([]);
   const [ModeRecord, setModeRecord] = useState<string>("");
-  const [TotalProdQTY, setTotalProdQTY] = useState<number>(0);
-
 
   //? *********************** function download chart to file .jpg ************************
   const downloadChart = async () => {
@@ -203,36 +202,58 @@ const App: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  //TODO: ค่าที่เป้นการเเสดงผล,การคำนวณต่างๆ ควรเอามาไว้ข้างนอกเเล้วค่อยเรียกใช้เพื่อลดจำนวนวนลูป
+  //console.log("DataRepeat:", DataRepeat)
+
+  //TODO: ค่าที่เป็นการเเสดงผล,การคำนวณต่างๆ ควรเอามาไว้ข้างนอกเเล้วค่อยเรียกใช้เพื่อลดจำนวนวนลูป
   const dateColumns: any = [];
   let totalDefectQTY = 0;
   let totalProdQTY = 0;
-  let totalDefectRatio =0;
+  let totalDefectRatio = 0;
+  let totalDefectMode = 0;
 
   for (let i = 1; i <= 31; i++) {
     let DefectQTY = 0;
     let ProdQTY = 0;
-    let DefectRatio =0;
+    let DefectRatio = 0;
+    let DefectMode = 0;
 
-//? Calculate varible in total colume ==> 1.Prod.QTY(n) 2.Defect.QTY(np) 3.DefectRation 4.Count Defect mode 5.MC Setup 6.Quality Test
-    DataRepeat.forEach((item: any) => {
-      const approval_date = new Date(item.record_date);
+    //TODO: ดึงผลรวมของ defect แต่ละ mode ออกไปแสดงที่คอลัม total
+    DataRepeat.forEach((data: any) => {
+      const approval_date = new Date(data.record_date);
+      if (approval_date.getDate() === i && data.id === 110) {
+          totalDefectMode += data.quantity;
+      }
+    });
+    //console.log("dataaa:", DataRepeat)
+
+    totalDefectMode += DefectMode;
+    console.log("totalDefectMode:", totalDefectMode);
+
+
+
+
+
+
+    //? Calculate varible in total colume ==> 1.Prod.QTY(n) 2.Defect.QTY(np) 3.DefectRation 4.Count Defect mode 5.MC Setup 6.Quality Test
+    DataRepeat.forEach((data: any) => {
+      const approval_date = new Date(data.record_date);
       if (approval_date.getDate() === i) {
-        DefectQTY += item.quantity;
+        DefectQTY += data.quantity;
       }
     });
 
-    DataScrap.forEach((item: any) => {
-      const approval_date = new Date(item.record_date);
+    //? forEach ===> loop all array
+    DataScrap.forEach((data: any) => {
+      const approval_date = new Date(data.record_date);
       if (approval_date.getDate() === i) {
-        DefectQTY += item.quantity;
+        DefectQTY += data.quantity;
       }
     });
 
-    DataRepeatNG.forEach((item: any) => {
-      const approval_date = new Date(item.record_date);
+    DataRepeatNG.forEach((data: any) => {
+      const approval_date = new Date(data.record_date);
       if (approval_date.getDate() === i) {
-        DefectQTY += item.quantity;
+        DefectQTY += data.quantity;
       }
     });
     totalDefectQTY += DefectQTY;
@@ -250,20 +271,26 @@ const App: React.FC = () => {
     QTY.forEach((data: any) => {
       const approval_date = new Date(data.date);
       if (approval_date.getDate() === i) {
-        const calculatedRatio = ((DefectQTY / data.qty) * 100).toFixed(2); 
+        const calculatedRatio = ((DefectQTY / data.qty) * 100).toFixed(2);
         DefectRatio = parseFloat(calculatedRatio);
       }
     });
-    totalDefectRatio += DefectRatio
+    totalDefectRatio += DefectRatio;
 
-    
-    //? Show data in table 
+    //? Show data in table
     dateColumns.push({
       title: `${i}`,
       dataIndex: `${i}`,
       width: 60,
       key: `${i}`,
       render: (_: any, item: any) => {
+        //console.log("item:", item)
+      
+
+        if (item.category === "React" || item.category === "Scrap" || item.category === "Repeat NG"){
+          
+        }
+
 
         //? show Prod.QTY(n) in table
         const qty = QTY.find((data: any) => {
@@ -272,10 +299,15 @@ const App: React.FC = () => {
             item.category === "Prod. QTY(n)" && approval_date.getDate() === i
           );
         });
-        
+
         if (qty) {
           return <span> {qty.qty} </span>;
         }
+
+
+        //? Calculate total Defect mode in table
+
+
 
         //? show Defect.QTY(n) for mode in table
         const np_repeat = DataRepeat.find((data: any) => {
@@ -289,11 +321,11 @@ const App: React.FC = () => {
 
         if (np_repeat && item.category === "Repeat") {
           return (
-            <a onClick={() => showModal(i, item.mode)}>
-              {np_repeat.quantity}
-            </a>
+            <a onClick={() => showModal(i, item.mode)}> {np_repeat.quantity} </a>
           );
         }
+
+        
 
         const np_scrap = DataScrap.find((data: any) => {
           const approval_date = new Date(data.record_date);
@@ -322,15 +354,11 @@ const App: React.FC = () => {
         if (np_repeat_ng && item.category === "Repeat NG") {
           return (
             <a onClick={() => showModal(i, item.mode)}>
-              {" "}
               {np_repeat_ng.quantity}
             </a>
           );
-        };
-        
-    
+        }
 
-       
         const Data_Record = Approval.find((data: any) => {
           const approval_date = new Date(data.approval_date);
           return (
@@ -378,12 +406,12 @@ const App: React.FC = () => {
     });
   }
 
-
   //?
   const Repeat =
     DataRepeat.length > 0
       ? Array.from(new Set(DataRepeat.map((item: any) => item.id))).map(
           (id, index) => {
+            
             const item = DataRepeat.find((item: any) => item.id === id);
             return {
               key: (index + 4).toString(),
@@ -391,7 +419,7 @@ const App: React.FC = () => {
               mode_id: item.id,
               mode: item.mode || "",
               target: item.target || 0,
-              total: 0,
+              total: totalDefectMode,
             };
           }
         )
@@ -557,9 +585,27 @@ const App: React.FC = () => {
 
   //TODO: หมุนตัวอักษรให้เป้นแนวตั้งของแต่ละ category
   const data: DataObject[] = [
-    { key: "1", category: "Prod. QTY(n)", mode: "", target: 0, total: totalProdQTY },
-    { key: "2", category: "Defect QTY(np)", mode: "", target: 0, total: totalDefectQTY },
-    { key: "3", category: "Defect Ratio", mode: "", target: 0, total: totalDefectRatio },
+    {
+      key: "1",
+      category: "Prod. QTY(n)",
+      mode: "",
+      target: 0,
+      total: totalProdQTY,
+    },
+    {
+      key: "2",
+      category: "Defect QTY(np)",
+      mode: "",
+      target: 0,
+      total: totalDefectQTY,
+    },
+    {
+      key: "3",
+      category: "Defect Ratio",
+      mode: "",
+      target: 0,
+      total: totalDefectRatio,
+    },
     ...Repeat,
     ...Scrap,
     ...RepeatNG,
