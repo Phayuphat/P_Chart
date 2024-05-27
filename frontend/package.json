@@ -14,7 +14,7 @@
     "@ant-design/icons": "^5.2.6",
     "@nextui-org/react": "^2.2.9",
     "@types/lodash": "4.14.202",
-    "antd": "^5.17.0",
+    "antd": "^5.17.3",
     "axios": "0.27.2",
     "dayjs": "1.11.10",
     "framer-motion": "^11.0.6",

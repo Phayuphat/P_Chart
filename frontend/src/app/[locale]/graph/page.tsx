@@ -6,15 +6,13 @@ import Modalshow from "@/components/modal/Modal";
 import { Table, DatePicker, Button, Form, Select, Radio, Input } from "antd";
 import type { TableProps, DatePickerProps } from "antd";
 import FormItem from "antd/es/form/FormItem";
-import dayjs from "dayjs";
-import DemoDualAxes from "@/components/chart/pareto";
-import DemoDualAxesa from "@/components/chart/p_chart";
+import ParetoChart from "@/components/chart/pareto";
+import P_Chart from "@/components/chart/p_chart";
 import html2canvas from "html2canvas";
 import { SearchOutlined } from "@ant-design/icons";
 import axiosInstance from "@/lib/axios";
 
-import DrawerMode from "@/components/drawer_mode/drawer_mode";
-import { values } from "lodash";
+import { toInteger, values } from "lodash";
 import { count } from "console";
 import { text } from "stream/consumers";
 import Item from "antd/es/list/Item";
@@ -34,6 +32,7 @@ const App: React.FC = () => {
     total: number | null;
   }
 
+  //? set state
   const ChartRef = useRef<HTMLDivElement>(null);
   const [form] = Form.useForm();
   const [ChangeChart, setTypeChart] = useState("p_chart");
@@ -47,6 +46,7 @@ const App: React.FC = () => {
   const [QTY, setQTY] = useState<any>([]);
   const [DateRecord, setDateRecord] = useState<any>([]);
   const [ModeRecord, setModeRecord] = useState<string>("");
+  const [DataMode, setDataMode] = useState<any>([]);
 
   //? *********************** function download chart to file .jpg ************************
   const downloadChart = async () => {
@@ -95,6 +95,7 @@ const App: React.FC = () => {
     }
   };
 
+  //? useEffect ===> fetch line name when open website for first time
   useEffect(() => {
     fetch_linename();
   }, []);
@@ -132,6 +133,7 @@ const App: React.FC = () => {
       return;
     }
 
+    //? get prod.QTY(n)
     const line_id = form.getFieldValue("LineName") || "0";
     const part_no = form.getFieldValue("Part Number") || "0";
     const response_qty = await axiosInstance.get(
@@ -141,6 +143,7 @@ const App: React.FC = () => {
     );
     setQTY(response_qty.data);
 
+    //? get approval name
     const response_approval = await axiosInstance.get(
       "/commons/get_data_approval",
       {
@@ -153,6 +156,7 @@ const App: React.FC = () => {
     );
     setApproval(response_approval.data);
 
+    //? get defect mode
     const response_data_all = await axiosInstance.get(
       "/commons/get_data_mode",
       {
@@ -164,6 +168,11 @@ const App: React.FC = () => {
         },
       }
     );
+
+    if (response_data_all.status === 200) {
+      setDataMode(response_data_all.data);
+    }
+    console.log("data mode:", DataMode);
 
     if (response_data_all.status === 200) {
       const data_repeat = response_data_all.data.filter(
@@ -183,7 +192,7 @@ const App: React.FC = () => {
     }
   };
 
-  //? ************************************ switch chart ********************************
+  //? ************************************ function switch chart ********************************
   const handleChangeChart = (value: any) => {
     setTypeChart(value.target.value);
   };
@@ -202,38 +211,31 @@ const App: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  //console.log("DataRepeat:", DataRepeat)
-
   //TODO: ค่าที่เป็นการเเสดงผล,การคำนวณต่างๆ ควรเอามาไว้ข้างนอกเเล้วค่อยเรียกใช้เพื่อลดจำนวนวนลูป
+  //? varible show in total column
   const dateColumns: any = [];
   let totalDefectQTY = 0;
   let totalProdQTY = 0;
   let totalDefectRatio = 0;
-  let totalDefectMode = 0;
+  let totalNumberCount = 0;
+
+  // //? Calculate total defect row by row
+  const total_quantity: any = {};
+  DataMode.forEach((data: any) => {
+    if (!total_quantity[data.id]) {
+      total_quantity[data.id] = 0; //? สร้าง key ใหม่ในกรณีที่ยังไม่มี
+    }
+    total_quantity[data.id] += data.quantity;
+  });
+
 
   for (let i = 1; i <= 31; i++) {
     let DefectQTY = 0;
     let ProdQTY = 0;
     let DefectRatio = 0;
-    let DefectMode = 0;
+    let NumberCount = 0;
 
-    //TODO: ดึงผลรวมของ defect แต่ละ mode ออกไปแสดงที่คอลัม total
-    DataRepeat.forEach((data: any) => {
-      const approval_date = new Date(data.record_date);
-      if (approval_date.getDate() === i && data.id === 110) {
-          totalDefectMode += data.quantity;
-      }
-    });
-    //console.log("dataaa:", DataRepeat)
-
-    totalDefectMode += DefectMode;
-    console.log("totalDefectMode:", totalDefectMode);
-
-
-
-
-
-
+    //TODO: สามารถใช้ค่า DataMode เเล้วเพิ่มเงื่อนไขในการวนลูปแทนได้ไหม
     //? Calculate varible in total colume ==> 1.Prod.QTY(n) 2.Defect.QTY(np) 3.DefectRation 4.Count Defect mode 5.MC Setup 6.Quality Test
     DataRepeat.forEach((data: any) => {
       const approval_date = new Date(data.record_date);
@@ -262,11 +264,14 @@ const App: React.FC = () => {
       const approval_date = new Date(data.date);
       if (approval_date.getDate() === i) {
         ProdQTY += data.qty;
+        if (data.qty !== 0) {
+          NumberCount++;
+        }
       }
     });
     totalProdQTY += ProdQTY;
+    totalNumberCount += NumberCount;
 
-    //TODO: หาผลรวมของ Defect Ratio per day ไปเเสดงที่คอลัม Total
     //? Calculate Defect Ratio per day === (n/np)*100
     QTY.forEach((data: any) => {
       const approval_date = new Date(data.date);
@@ -277,20 +282,19 @@ const App: React.FC = () => {
     });
     totalDefectRatio += DefectRatio;
 
-    //? Show data in table
+    //? Show data in table (i === date)
     dateColumns.push({
       title: `${i}`,
       dataIndex: `${i}`,
       width: 60,
       key: `${i}`,
       render: (_: any, item: any) => {
-        //console.log("item:", item)
-      
-
-        if (item.category === "React" || item.category === "Scrap" || item.category === "Repeat NG"){
-          
+        if (
+          item.category === "React" ||
+          item.category === "Scrap" ||
+          item.category === "Repeat NG"
+        ) {
         }
-
 
         //? show Prod.QTY(n) in table
         const qty = QTY.find((data: any) => {
@@ -304,11 +308,6 @@ const App: React.FC = () => {
           return <span> {qty.qty} </span>;
         }
 
-
-        //? Calculate total Defect mode in table
-
-
-
         //? show Defect.QTY(n) for mode in table
         const np_repeat = DataRepeat.find((data: any) => {
           const approval_date = new Date(data.record_date);
@@ -321,11 +320,12 @@ const App: React.FC = () => {
 
         if (np_repeat && item.category === "Repeat") {
           return (
-            <a onClick={() => showModal(i, item.mode)}> {np_repeat.quantity} </a>
+            <a onClick={() => showModal(i, item.mode)}>
+              {" "}
+              {np_repeat.quantity}{" "}
+            </a>
           );
         }
-
-        
 
         const np_scrap = DataScrap.find((data: any) => {
           const approval_date = new Date(data.record_date);
@@ -359,6 +359,7 @@ const App: React.FC = () => {
           );
         }
 
+        //? show data approval in table
         const Data_Record = Approval.find((data: any) => {
           const approval_date = new Date(data.approval_date);
           return (
@@ -406,12 +407,11 @@ const App: React.FC = () => {
     });
   }
 
-  //?
+  //? make array Repeat from DataRepeat for make object
   const Repeat =
     DataRepeat.length > 0
       ? Array.from(new Set(DataRepeat.map((item: any) => item.id))).map(
           (id, index) => {
-            
             const item = DataRepeat.find((item: any) => item.id === id);
             return {
               key: (index + 4).toString(),
@@ -419,7 +419,7 @@ const App: React.FC = () => {
               mode_id: item.id,
               mode: item.mode || "",
               target: item.target || 0,
-              total: totalDefectMode,
+              total: total_quantity[item.id],
             };
           }
         )
@@ -445,7 +445,7 @@ const App: React.FC = () => {
               mode_id: item.id,
               mode: item.mode || "",
               target: item.target || 0,
-              total: 0,
+              total: total_quantity[item.id],
             };
           }
         )
@@ -471,7 +471,7 @@ const App: React.FC = () => {
               mode_id: item.id,
               mode: item.mode || "",
               target: item.target || 0,
-              total: 0,
+              total: total_quantity[item.id],
             };
           }
         )
@@ -487,6 +487,7 @@ const App: React.FC = () => {
         ];
 
   //TODO: ทำให้โค้ดสั้นลง และเข้าใจง่ายกว่านี้ ตรวจสอบการเขียนอีกครั้งหนึ่ง
+  //? title column
   const columns: TableProps<DataType>["columns"] = [
     {
       title: "Defective Item",
@@ -583,7 +584,24 @@ const App: React.FC = () => {
     },
   ];
 
+  //? calculate p-bar, n_bar, k, ucl, lcl
+  let p_bar = (totalDefectQTY / totalProdQTY) * 100;
+  //console.log("p bar:", p_bar);
+
+  let k = ((p_bar * (100 - p_bar)) / totalProdQTY) ** (1 / 3);
+  //console.log("k:", k)
+
+  let n_bar = (totalProdQTY / totalNumberCount).toFixed(2);
+  //console.log("n_bar:", n_bar)
+
+  let ucl_p = parseFloat(p_bar.toFixed(2)) + parseFloat(k.toFixed(2));
+  //console.log("ucl:", ucl_p)
+
+  let lcl_p = parseFloat(p_bar.toFixed(2)) - parseFloat(k.toFixed(2));
+  //console.log("lcl:", lcl_p)
+
   //TODO: หมุนตัวอักษรให้เป้นแนวตั้งของแต่ละ category
+  //? data in table
   const data: DataObject[] = [
     {
       key: "1",
@@ -652,6 +670,9 @@ const App: React.FC = () => {
       total: null,
     },
   ];
+
+  //!==============================
+  //console.log("mode:", DataMode)
 
   return (
     <>
@@ -764,42 +785,48 @@ const App: React.FC = () => {
 
       <div className="switch_chart">
         <span>
-          {/* <Button
+          <Button
             type="primary"
             style={{ width: "200px", margin: "0px" }}
             onClick={downloadChart}
           >
             Dowload Image Chart
-          </Button> */}
+          </Button>
         </span>
         <span>
-          {/* <Radio.Group
+          <Radio.Group
             defaultValue="p_chart"
             buttonStyle="solid"
             onChange={handleChangeChart}
           >
             <Radio.Button value="p_chart"> P Chart </Radio.Button>
             <Radio.Button value="pareto"> Pareto Chart </Radio.Button>
-          </Radio.Group> */}
+          </Radio.Group>
         </span>
       </div>
-      {/* {ChangeChart === "pareto" ? (
+      {ChangeChart === "pareto" ? (
         <div
           ref={ChartRef}
           style={{ backgroundColor: "white", margin: "10px" }}
         >
-          <DemoDualAxes />
+          <ParetoChart 
+            datamode={DataMode} />
         </div>
       ) : (
         <div
           ref={ChartRef}
           style={{ backgroundColor: "white", margin: "10px" }}
         >
-          <DemoDualAxesa />
+          {/* TODOL: นำค่ามาใส่ในตาราง */}
+          <P_Chart 
+            // data1={dataUCL}
+            // data2={dataPbar}
+            // data3={dataDefectRatio}
+            // data4={dataDF}
+            />
         </div>
-      )} */}
+      )} 
 
-      {/* <Modalshow isOpen={{open}} /> */}
       <Table
         className="record_table"
         bordered

@@ -29,8 +29,8 @@ interface ModalProps {
   onClose: () => void;
   part_no: string | null;
   line_id: number | null;
-  date_record: any
-  mode: string
+  date_record: any;
+  mode: string;
 }
 //TODO: เขียน API เพื่อส่งค่าจำนวนของเสียไปบันทึกไว้ใน Database(pchart_record)
 const Modalshow: React.FC<ModalProps> = ({
@@ -39,7 +39,7 @@ const Modalshow: React.FC<ModalProps> = ({
   part_no,
   line_id,
   date_record,
-  mode
+  mode,
 }) => {
   const [form] = Form.useForm();
   const [PartNo, setPartNo] = useState<any>([]);
@@ -55,10 +55,10 @@ const Modalshow: React.FC<ModalProps> = ({
 
   //*********************************** get part number in pchart_record tablr ***************
   const get_part_record = async () => {
-    const date = moment(date_record)
+    const date = moment(date_record);
     const mount = date.format("MM");
     const year = date.format("YYYY");
-    
+
     try {
       const response_part = await axiosInstance.get(
         `/commons/get_part_record?line_id=${line_id}&mode=${mode}&mount=${mount}&year=${year}`
@@ -71,7 +71,7 @@ const Modalshow: React.FC<ModalProps> = ({
         setPartNoRecord(part_no_record);
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
       return error;
     }
   };
@@ -82,7 +82,6 @@ const Modalshow: React.FC<ModalProps> = ({
     }
   }, [isOpen]);
 
-
   //******************************** save quantity defect to database ************************
   const save_np = async () => {
     try {
@@ -91,7 +90,7 @@ const Modalshow: React.FC<ModalProps> = ({
         mode: mode,
         part_no: partnumber,
         count: count,
-        date_record: date.format("YYYY-MM-DD")
+        date_record: date.format("YYYY-MM-DD"),
       });
 
       if (response_np.status === 200) {
@@ -372,9 +371,7 @@ const Modalshow: React.FC<ModalProps> = ({
             className="save"
             type="primary"
             //TODO: เมื่อกด save ให้ทำการดึงข้อมูลออกมาเเสดงผลตามที่ทำการบันทึกไป
-            onClick={() => 
-              save_np
-            }
+            onClick={save_np}
             style={{ margin: "5px", marginLeft: "900px" }}
           >
             Save
