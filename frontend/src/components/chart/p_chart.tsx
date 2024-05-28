@@ -8,60 +8,47 @@ const P_Chart = dynamic(
   () => import("@ant-design/plots/es").then((mod) => mod.DualAxes),
   { ssr: false }
 );
-
-interface A1 {
-  date: string;
-  type: any;
-  value: number;
+interface DefectData {
+  day: number
+  Defect_QTY: number
 }
-interface UCL_ {
-  data1: A1[];
+interface ProductData {
+  day: number
+  Prod_QTY: number
 }
-
-interface A2 {
-  date: string;
-  type: any;
-  value: number;
+interface DefectRatioData {
+  day: number
+  DefectRatoin: number
 }
-interface Pbar_ {
-  data2: A2[];
-}
-
-interface A3 {
-  date: string;
-  type: any;
-  value: number;
-}
-interface DefectRatio_ {
-  data2: A3[];
-}
-
-interface A4 {
-    date: string;
-    type: any;
-    value1: number;
-}
-interface Defect_ {
-    data4: A4[];
-}
-
 interface referenceData {
-  data1: UCL_[];
-  data2: Pbar_[];
-  data3: DefectRatio_[];
-  data4: Defect_[];
+  Defect_QTY: DefectData[];
+  Prod_QTY: ProductData[];
+  DefectRatio: DefectRatioData[];
 }
 
 export const DualPchart: React.FC<referenceData> = ({
-  data1,
-  data2,
-  data3,
-  data4,
+  Defect_QTY,
+  Prod_QTY,
+  DefectRatio,
 }) => {
-  // console.log("data1:", data1);
-  // console.log("data2:", data2);
-  // console.log("data3:", data3);
+  
+  const defectRatios = Defect_QTY.map((defect: any) => {
+    const prod = Prod_QTY.find((p: any) => p.day === defect.day);
+    if (prod) {
+      let ratio = ((defect.Defect_QTY / prod.Prod_QTY) * 100).toFixed(2);
+      let ratioValue = parseFloat(ratio);
+      if (isNaN(ratioValue)) {
+        ratioValue = 0;
+      }
+      return { day: defect.day, ratio: ratioValue };
+    }
+    return { day: defect.day, ratio: 0 };
+  });
+  
 
+
+  const data4 = Defect_QTY;
+  const data3 = defectRatios
 
   const config: DualAxesConfig = {
     tooltip: {
@@ -99,7 +86,7 @@ export const DualPchart: React.FC<referenceData> = ({
     children: [
       {
         //UCL
-        data: data1,
+        //data: data1,
         type: "point", //point
         yField: "value", //value
         colorField: "type",
@@ -112,7 +99,7 @@ export const DualPchart: React.FC<referenceData> = ({
       },
       {
         //Pbar
-        data: data2,
+        //data: data2,
         type: "line",
         yField: "value",
         colorField: "type",
@@ -147,7 +134,7 @@ export const DualPchart: React.FC<referenceData> = ({
       },
       {
         //Defectratio
-        data: data3,
+        //data: data3,
         type: "point",
         yField: "value",
         colorField: "type",
@@ -187,14 +174,14 @@ export const DualPchart: React.FC<referenceData> = ({
 
   return (
     <div>
-      {data1.length !== 0 ? (
+      {/* {data1.length !== 0 ? (
         <P_Chart {...config} />
       ) : (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={"Plese select the data and summit"}
         />
-      )}
+      )} */}
     </div>
   );
 };

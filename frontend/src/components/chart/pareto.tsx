@@ -25,20 +25,22 @@ const ParetoChart: React.FC<ParetoChartProps> = ({ datamode }) => {
     mode_quantity[data.mode] += data.quantity;
   });
 
-  //TODO: กราฟแท่งของแต่ละ Defect Mode ยังไม่เรียงลำดับจากมากไปหาน้อย
-  const ModeQuantityData = Object.entries(mode_quantity).map(
+  const ModeQuantityData= Object.entries(mode_quantity).map(
     ([mode, quantity]) => ({
       x: mode,
-      value: quantity,
+      value: quantity as number,
     })
   );
+  //? result ModeQuantityData ===> [{x: 'C', value: 40},{x: 'A', value: 20},{x: 'AAA', value: 40}]
+
+  const sortedData = ModeQuantityData.sort((a, b) => b.value - a.value);
 
   const config = {
     scale: { y: { nice: false } },
     data: {
       type: "inline",
       //? Defect mode and Count
-      value: ModeQuantityData,
+      value: sortedData,
       transform: [
         {
           type: "custom",

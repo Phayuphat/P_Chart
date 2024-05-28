@@ -12,7 +12,7 @@ import html2canvas from "html2canvas";
 import { SearchOutlined } from "@ant-design/icons";
 import axiosInstance from "@/lib/axios";
 
-import { toInteger, values } from "lodash";
+import { cloneWith, toInteger, values } from "lodash";
 import { count } from "console";
 import { text } from "stream/consumers";
 import Item from "antd/es/list/Item";
@@ -31,7 +31,10 @@ const App: React.FC = () => {
     target: number | number[];
     total: number | null;
   }
-
+  interface DefectRatioData {
+  day: number;
+  DefectRatio: number;
+}
   //? set state
   const ChartRef = useRef<HTMLDivElement>(null);
   const [form] = Form.useForm();
@@ -170,9 +173,8 @@ const App: React.FC = () => {
     );
 
     if (response_data_all.status === 200) {
-      setDataMode(response_data_all.data);
-    }
-    console.log("data mode:", DataMode);
+      setDataMode(response_data_all.data)
+    };
 
     if (response_data_all.status === 200) {
       const data_repeat = response_data_all.data.filter(
@@ -197,7 +199,7 @@ const App: React.FC = () => {
     setTypeChart(value.target.value);
   };
 
-  //? *********************************** function open modal ***************************
+  //? *********************************** function open & close modal ***************************
   const showModal = (day: number, mode: string) => {
     const date = form.getFieldValue("Date");
     const date_record = date.format("YYYY-MM-") + day;
@@ -214,6 +216,11 @@ const App: React.FC = () => {
   //TODO: ค่าที่เป็นการเเสดงผล,การคำนวณต่างๆ ควรเอามาไว้ข้างนอกเเล้วค่อยเรียกใช้เพื่อลดจำนวนวนลูป
   //? varible show in total column
   const dateColumns: any = [];
+  const DefectRatios: DefectRatioData[] = [];
+  const Defect_QTY: any =[];
+  const Prod_QTY: any =[];
+
+
   let totalDefectQTY = 0;
   let totalProdQTY = 0;
   let totalDefectRatio = 0;
@@ -278,9 +285,13 @@ const App: React.FC = () => {
       if (approval_date.getDate() === i) {
         const calculatedRatio = ((DefectQTY / data.qty) * 100).toFixed(2);
         DefectRatio = parseFloat(calculatedRatio);
-      }
+      } 
     });
+    DefectRatios.push({ day: i, DefectRatio : DefectRatio });
+    Defect_QTY.push({day: i, DefectQTY: DefectQTY})
+    Prod_QTY.push({day: i, ProdQTY: ProdQTY})
     totalDefectRatio += DefectRatio;
+
 
     //? Show data in table (i === date)
     dateColumns.push({
@@ -406,7 +417,7 @@ const App: React.FC = () => {
       },
     });
   }
-
+  
   //? make array Repeat from DataRepeat for make object
   const Repeat =
     DataRepeat.length > 0
@@ -585,21 +596,71 @@ const App: React.FC = () => {
   ];
 
   //? calculate p-bar, n_bar, k, ucl, lcl
-  let p_bar = (totalDefectQTY / totalProdQTY) * 100;
-  //console.log("p bar:", p_bar);
+  let p_bar_last_mount = (totalDefectQTY / totalProdQTY) * 100;
+  // console.log("p bar last moount:", p_bar_last_mount);
+  
+  //? DefectRation/day
+  const DefectRatio = Defect_QTY.map((data: any) => {
+    const product = Prod_QTY.find((p: any) => p.day === data.day);
+    if (product) {
+      let defect_ratio = ((data.DefectQTY / product.ProdQTY) * 100).toFixed(2);
+      let ratioValue = parseFloat(defect_ratio);
+      if (isNaN(ratioValue)) {
+        ratioValue = 0;
+      }
+      return { day: data.day, defect_ratio: ratioValue };
+    }
+    return { day: data.day, defect_ratio: 0 };
+  });
+  //console.log("Defect Ratio:", DefectRatio);
 
-  let k = ((p_bar * (100 - p_bar)) / totalProdQTY) ** (1 / 3);
-  //console.log("k:", k)
+  //? n bar/dat
+  const n_bar = Prod_QTY;
 
-  let n_bar = (totalProdQTY / totalNumberCount).toFixed(2);
-  //console.log("n_bar:", n_bar)
+  //? p_bar/day
+  const p_bar = DefectRatio;
+  // console.log("p bar:", p_bar)
+  // console.log("prod:", Prod_QTY)
+  
+  //? k/day ==> ((p_bar * (100 - p_bar)) / totalProdQTY) ** (1 / 3);
+  const k: any = [];
+  p_bar.forEach((p: any) => {
+    const product = Prod_QTY.find((q: any) => q.day === p.day);
+    if (product) {
+      if (p.p_bar !== 0 && product.ProdQTY !== 0) {
+        const formulaResult = ((p.defect_ratio * (100 - p.defect_ratio)) / product.ProdQTY) ** (1 / 3);
+        const resultValue = isNaN(formulaResult) ? 0 : formulaResult;
+        k.push({ day: p.day, result: resultValue });
+      } else {
+        k.push({ day: p.day, result: 0 });
+      }
+    }
+  });
+  // console.log("k", k);
 
-  let ucl_p = parseFloat(p_bar.toFixed(2)) + parseFloat(k.toFixed(2));
-  //console.log("ucl:", ucl_p)
+//? UCL ==> p_bar + k
 
-  let lcl_p = parseFloat(p_bar.toFixed(2)) - parseFloat(k.toFixed(2));
-  //console.log("lcl:", lcl_p)
+  // const combined = p_bar.map(p => {
+  //   const resultObj = results.find(r => r.day === p.day);
+  //   return {
+  //     day: p.day,
+  //     p_bar: p.p_bar,
+  //     result: resultObj ? resultObj.result : 0
+  //   };
+  // });
 
+
+
+  // let p_bar = (totalDefectQTY / totalProdQTY) * 100;
+  // console.log("p bar:", p_bar)
+  //let p_bar = (Defect_QTY / Prod_QTY) * 100;
+  //let k = ((p_bar * (100 - p_bar)) / totalProdQTY) ** (1 / 3);
+  //let n_bar = (totalProdQTY / totalNumberCount).toFixed(2);
+  //let ucl_p = parseFloat(p_bar.toFixed(2)) + parseFloat(k.toFixed(2));
+  //let lcl_p = parseFloat(p_bar.toFixed(2)) - parseFloat(k.toFixed(2));
+
+
+  
   //TODO: หมุนตัวอักษรให้เป้นแนวตั้งของแต่ละ category
   //? data in table
   const data: DataObject[] = [
@@ -670,9 +731,6 @@ const App: React.FC = () => {
       total: null,
     },
   ];
-
-  //!==============================
-  //console.log("mode:", DataMode)
 
   return (
     <>
@@ -819,6 +877,9 @@ const App: React.FC = () => {
         >
           {/* TODOL: นำค่ามาใส่ในตาราง */}
           <P_Chart 
+            Defect_QTY = {Defect_QTY}
+            Prod_QTY={Prod_QTY}
+            DefectRatio = {DefectRatios}
             // data1={dataUCL}
             // data2={dataPbar}
             // data3={dataDefectRatio}
