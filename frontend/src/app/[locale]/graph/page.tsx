@@ -1,13 +1,11 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-
 import Modalshow from "@/components/modal/Modal";
-import { Table, DatePicker, Button, Form, Select, Radio, Input } from "antd";
-import type { TableProps, DatePickerProps } from "antd";
+import { Table, DatePicker, Button, Form, Select, Radio } from "antd";
+import type { TableProps} from "antd";
 import FormItem from "antd/es/form/FormItem";
 import ParetoChart from "@/components/chart/pareto";
-import P_Chart from "@/components/chart/p_chart";
+import { DualPchart } from "@/components/chart/p_chart";
 import html2canvas from "html2canvas";
 import { SearchOutlined } from "@ant-design/icons";
 import axiosInstance from "@/lib/axios";
@@ -23,18 +21,27 @@ const App: React.FC = () => {
     category: string;
     mode: string;
     target: number;
-  }
+  };
   interface DataObject {
     key: string;
     category: string;
     mode: string | string[];
     target: number | number[];
     total: number | null;
-  }
+  };
   interface DefectRatioData {
-  day: number;
-  DefectRatio: number;
-}
+    day: number;
+    DefectRatio: number;
+  };
+  interface DefectQTY{
+    day: number;
+    DefectQTY: number;
+  };
+  interface ProductQTY{
+    day: number;
+    ProdQTY: number;
+  };
+
   //? set state
   const ChartRef = useRef<HTMLDivElement>(null);
   const [form] = Form.useForm();
@@ -94,7 +101,7 @@ const App: React.FC = () => {
         setLineName(response_linename.data);
       }
     } catch (error) {
-      return error;
+      return error
     }
   };
 
@@ -107,7 +114,6 @@ const App: React.FC = () => {
   const ShiftChange = async () => {
     try {
       const line_id = form.getFieldValue("LineName") || "0";
-
       const response_part = await axiosInstance.get(
         `/commons/get_part_no?line_id=${line_id}`
       );
@@ -115,8 +121,8 @@ const App: React.FC = () => {
       if (response_part.status === 200) {
         setPartNo(response_part.data);
       }
-    } catch (err) {
-      return err;
+    } catch (error) {
+      return error
     }
   };
 
@@ -126,15 +132,15 @@ const App: React.FC = () => {
     const date = form.getFieldValue("Date");
 
     //TODO:why don't use rules in form.item
-    if (!date) {
-      form.setFields([
-        {
-          name: "Date",
-          errors: ["Please select Date"],
-        },
-      ]);
-      return;
-    }
+      if (!date) {
+        form.setFields([
+          {
+            name: "Date",
+            errors: ["Please select Date"],
+          },
+        ]);
+        return;
+      }
 
     //? get prod.QTY(n)
     const line_id = form.getFieldValue("LineName") || "0";
@@ -146,7 +152,7 @@ const App: React.FC = () => {
     );
     setQTY(response_qty.data);
 
-    //? get approval name
+    //? get approval name(static)
     const response_approval = await axiosInstance.get(
       "/commons/get_data_approval",
       {
@@ -213,13 +219,11 @@ const App: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  //TODO: ค่าที่เป็นการเเสดงผล,การคำนวณต่างๆ ควรเอามาไว้ข้างนอกเเล้วค่อยเรียกใช้เพื่อลดจำนวนวนลูป
   //? varible show in total column
   const dateColumns: any = [];
   const DefectRatios: DefectRatioData[] = [];
-  const Defect_QTY: any =[];
-  const Prod_QTY: any =[];
-
+  const Defect_QTY: DefectQTY[] =[];
+  const Prod_QTY: ProductQTY[] =[];
 
   let totalDefectQTY = 0;
   let totalProdQTY = 0;
@@ -235,8 +239,8 @@ const App: React.FC = () => {
     total_quantity[data.id] += data.quantity;
   });
 
-
   for (let i = 1; i <= 31; i++) {
+    //? reset ค่าของตัวแปรทุกรอบการวง loop
     let DefectQTY = 0;
     let ProdQTY = 0;
     let DefectRatio = 0;
@@ -265,6 +269,7 @@ const App: React.FC = () => {
         DefectQTY += data.quantity;
       }
     });
+    //? เก็บค่า DefectQTY ไว้ในตัวแปร totalDefectQTY
     totalDefectQTY += DefectQTY;
 
     QTY.forEach((data: any) => {
@@ -279,7 +284,7 @@ const App: React.FC = () => {
     totalProdQTY += ProdQTY;
     totalNumberCount += NumberCount;
 
-    //? Calculate Defect Ratio per day === (n/np)*100
+    //? Calculate Defect Ratio per day ===> (n/np)*100
     QTY.forEach((data: any) => {
       const approval_date = new Date(data.date);
       if (approval_date.getDate() === i) {
@@ -293,7 +298,7 @@ const App: React.FC = () => {
     totalDefectRatio += DefectRatio;
 
 
-    //? Show data in table (i === date)
+    //? Show data in table (i === day)
     dateColumns.push({
       title: `${i}`,
       dataIndex: `${i}`,
@@ -538,7 +543,6 @@ const App: React.FC = () => {
       colSpan: 0,
       dataIndex: "mode",
       key: "catogory",
-      // rowScope: "row",
       fixed: "left",
       width: "100px",
       onCell: (item: any, index) => {
@@ -614,12 +618,12 @@ const App: React.FC = () => {
   });
   //console.log("Defect Ratio:", DefectRatio);
 
-  //? n bar/dat
+  //? n bar/day
   const n_bar = Prod_QTY;
 
   //? p_bar/day
   const p_bar = DefectRatio;
-  // console.log("p bar:", p_bar)
+  //console.log("p bar:", p_bar)
   // console.log("prod:", Prod_QTY)
   
   //? k/day ==> ((p_bar * (100 - p_bar)) / totalProdQTY) ** (1 / 3);
@@ -636,30 +640,87 @@ const App: React.FC = () => {
       }
     }
   });
-  // console.log("k", k);
+  //console.log("k", k);
 
-//? UCL ==> p_bar + k
+//? UCL/day ==> p_bar + k
+const barDict = p_bar.reduce((acc: any, item: any) => {
+  acc[item.day] = item.defect_ratio;
+  return acc;
+}, {});
 
-  // const combined = p_bar.map(p => {
-  //   const resultObj = results.find(r => r.day === p.day);
-  //   return {
-  //     day: p.day,
-  //     p_bar: p.p_bar,
-  //     result: resultObj ? resultObj.result : 0
-  //   };
-  // });
+const kDict = k.reduce((acc: any, item: any) => {
+  acc[item.day] = item.result;
+  return acc;
+}, {});
 
+const ucl = Object.keys(barDict).map(day => {
+  return {
+    day: parseInt(day),
+    ucl: (barDict[day] + kDict[day]).toFixed(2),
+  };
+});
 
+const lcl = Object.keys(barDict).map(day => {
+  return {
+    day: parseInt(day),
+    ucl: (barDict[day] - kDict[day]).toFixed(2),
+  };
+});
 
-  // let p_bar = (totalDefectQTY / totalProdQTY) * 100;
-  // console.log("p bar:", p_bar)
-  //let p_bar = (Defect_QTY / Prod_QTY) * 100;
-  //let k = ((p_bar * (100 - p_bar)) / totalProdQTY) ** (1 / 3);
-  //let n_bar = (totalProdQTY / totalNumberCount).toFixed(2);
-  //let ucl_p = parseFloat(p_bar.toFixed(2)) + parseFloat(k.toFixed(2));
-  //let lcl_p = parseFloat(p_bar.toFixed(2)) - parseFloat(k.toFixed(2));
+//! data1={dataUCL}
+//! data2={dataPbar}
+//! data3={dataDefectRatio}
+//! data4={dataDF}
+const DataUCL = ucl.flatMap(item => (
+  {
+    date: (item.day).toString(),
+    type: "UCL",
+    value: parseFloat(item.ucl)
+  }
+));
+//console.log("DataUCL",DataUCL);
 
+const DataPbar = p_bar.flatMap(item => (
+  {
+  date: (item.day).toString(),
+  type: "Pbar",
+  value: 0.5
+  }
+  
+));
+//console.log("p bar:", DataPbar)
 
+const DataDefectRatio = DefectRatio.map((item: any) => ({
+  date: (item.day).toString(),
+  type: "DefectRatio",
+  value: item.defect_ratio
+}))
+//console.log("DefectRatio:", DataDefectRatio)
+
+const DataDefect = Defect_QTY.map((item: any) => ({
+  date: (item.day).toString(),
+  type: "Defect_Part",
+  value: item.DefectQTY
+}))
+// console.log("Defect:", DataDefect)
+
+//? ผลรวมจำนวนของเสียในแต่ละ mode แต่ยังไม่ได้แบ่งตามวันที่
+const mode_quantity: any = {};
+  DataMode.forEach((data: any) => {
+    if (!mode_quantity[data.mode]) {
+      mode_quantity[data.mode] = 0; //? สร้าง key ใหม่ในกรณีที่ยังไม่มี
+    }
+    mode_quantity[data.mode] += data.quantity;
+  });
+
+  const ModeQuantityData= Object.entries(mode_quantity).map(
+    ([mode, quantity]) => ({
+      x: mode,
+      value: quantity as number,
+    })
+  );
+  //console.log("data mode:", ModeQuantityData)
+  //console.log("defect qty:", Prod_QTY)
   
   //TODO: หมุนตัวอักษรให้เป้นแนวตั้งของแต่ละ category
   //? data in table
@@ -876,14 +937,11 @@ const App: React.FC = () => {
           style={{ backgroundColor: "white", margin: "10px" }}
         >
           {/* TODOL: นำค่ามาใส่ในตาราง */}
-          <P_Chart 
-            Defect_QTY = {Defect_QTY}
-            Prod_QTY={Prod_QTY}
-            DefectRatio = {DefectRatios}
-            // data1={dataUCL}
-            // data2={dataPbar}
-            // data3={dataDefectRatio}
-            // data4={dataDF}
+          <DualPchart 
+            data1={DataUCL}
+            data2={DataPbar}
+            data3={DataDefectRatio}
+            data4={DataDefect}
             />
         </div>
       )} 

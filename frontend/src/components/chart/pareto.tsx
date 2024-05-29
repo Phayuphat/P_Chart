@@ -31,10 +31,8 @@ const ParetoChart: React.FC<ParetoChartProps> = ({ datamode }) => {
       value: quantity as number,
     })
   );
-  //? result ModeQuantityData ===> [{x: 'C', value: 40},{x: 'A', value: 20},{x: 'AAA', value: 40}]
 
   const sortedData = ModeQuantityData.sort((a, b) => b.value - a.value);
-
   const config = {
     scale: { y: { nice: false } },
     data: {
@@ -69,7 +67,7 @@ const ParetoChart: React.FC<ParetoChartProps> = ({ datamode }) => {
       {
         type: "interval",
         yField: "value",
-        scale: { x: { padding: 0.5 }, y: { domainMax: 312, tickCount: 5 } },
+        scale: { x: { padding: 0.5 }, y: { domainMax: 50, tickCount: 5 } },
         style: {
           fill: "#78B3F0",
         },
